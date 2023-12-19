@@ -25,7 +25,7 @@ To begin, let's import all the relevant libraries to our kernel.
 <details>
 <summary>View Code</summary>
 	
-```
+```python
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -45,7 +45,7 @@ I have also defined a custom function to check on empty and zero values within t
 <details>
 <summary>View Code</summary>
 
-```
+```python
 def summary(dtf):
   sumary=pd.concat([dtf.isna().sum(),((dtf == 0.sum())/dtf.shape[0],dtf.dtypes], axis=1)
   sumary=sumary.rename(columns={sumary.columns[0]: 'NaN'})
@@ -68,7 +68,7 @@ Looks like we have at least 3k entries having nil latitudes and longitudes which
 
 We will do the same approach for zero values in fare_amount and the NaNs in dropoff_longitude and dropoff_latitude.
 
-```
+```python
 df=df[df['pickup_longitude']!=0]
 df=df[df['pickup_latitude']!=0 | df['dropoff_longitude']!=0 | df['dropoff_latitude']!=0 | df['passenger_count']!=0]
 df.reset_index(inplace=True)
@@ -82,7 +82,7 @@ print(summary(df))
 <details>
 <summary>View Code</summary>
 	
-```
+```python
 mymap = folium.Map(location=[40.6970193,-74.3093268], zoom_start=4)
 marker_cluster = MarkerCluster(name='Pickups')
 marker_cluster2 = MarkerCluster(name='Dropoffs')
@@ -119,32 +119,32 @@ The zero entries removed earlier were just the tip of an iceberg, we need to scr
 latitudes and longitudes can only take on the following range of values, any value which falls outside these ranges are 100% invalid:
 * Latitudes: -90 to 90
 * Longitudes: -180 to 180
-```
+```python
 df[(abs(df['pickup_latitude'])>90)|(abs(df['dropoff_latitude'])>90)|(abs(df['dropoff_longitude'])>180)|(abs(df['pickup_longitude'])>180)].head(10)
 ```
 
 #### 2. Swapped Latitude and Longitude Values 
 Some rides had their latitude and longitude pairs reversed by plotting the coordinates, this is where the Antartica coordinates came from:
-```
+```python
 df[(df['pickup_latitude']<-70) | (df['dropoff_latitude']<-70)].head()
 ```		
 									
 #### 3. Intercontinential Travel
 There are also trips which spans across continents, and amazingly they all took less than $30, what a bang for a buck!								
-```
+```python
 df=df[abs(df['pickup_longitude']-df['dropoff_longitude'])<40]
 ```
 									
 #### 4. Trips in the Ocean
 Obviously we can't have coordinates in the ocean:
 
-```
+```python
 df=df[abs(df['pickup_longitude'])>1]
 df=df[~(((df['pickup_latitude']<40.52) & (df['pickup_longitude']>-73.96)) | ((df['dropoff_latitude']<40.52) & (df['dropoff_longitude']>-73.96)))]
 ```
 									
 #### 5. Identical Dropoff & Pickup Locations
 Seriously, why am I paying if your car didn't even budge? And surprisingly there were 1,316 of such trips!
-```
+```python
 df=df[(df['pickup_longitude']!= df['dropoff_longitude']) | (df['pickup_latitude']!= df['dropoff_latitude'])]
 ```
