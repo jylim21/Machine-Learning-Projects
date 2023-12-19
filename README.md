@@ -21,6 +21,10 @@ This analysis will be conducted using Python, with the following libraries:
 And we will be using the [Uber Fares Dataset](https://www.kaggle.com/datasets/yasserh/uber-fares-dataset) by *M YASSER H* which can be found on Kaggle, it contains data of 500k trips which are mainly concentrated in the suburbs of New York City, a pretty big one I would say!
 
 To begin, let's import all the relevant libraries to our kernel.
+
+<details>
+<summary>View Code</summary>
+	
 ```
 import pandas as pd
 import numpy as np
@@ -34,7 +38,12 @@ from geopy.geocoders import Nominatim
 
 df = pd.read_csv("/kaggle/input/uber-fares-dataset/uber.csv")
 ```
+</details>
+
 I have also defined a custom function to check on empty and zero values within the dataset as follow, it returns the number and % of NaNs and zeros for each column in the dataframe:
+
+<details>
+<summary>View Code</summary>
 
 ```
 def summary(dtf):
@@ -50,6 +59,8 @@ def summary(dtf):
 
 print(summary(df))
 ```
+</details>
+
 ### Output
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/1.jpg?raw=true)
 
@@ -67,6 +78,10 @@ df.rename(columns={"Unnamed: 0": "trip"}, inplace=True)
 print(summary(df))
 ```
 ## Mapping of Pickup and Dropoff Locations
+
+<details>
+<summary>View Code</summary>
+	
 ```
 mymap = folium.Map(location=[40.6970193,-74.3093268], zoom_start=4)
 marker_cluster = MarkerCluster(name='Pickups')
@@ -94,7 +109,9 @@ mouse_position = MousePosition(
 mymap.add_child(mouse_position)
 display(mymap)
 ```
-By plotting the coordinates on a map, it is obvious that this driver is based in New York City. Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
+</details>
+
+By plotting the coordinates on a map, we know for sure that this driver is based in New York City. Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
 
 The zero entries removed earlier were just the tip of an iceberg, we need to screen through the coordinates and eliminate any anomalies such as:
 
