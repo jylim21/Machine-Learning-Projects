@@ -35,8 +35,6 @@ import folium
 from folium.plugins import MarkerCluster, MousePosition
 from folium.features import DivIcon
 from geopy.geocoders import Nominatim
-
-df = pd.read_csv("/kaggle/input/uber-fares-dataset/uber.csv")
 ```
 </details>
 
@@ -56,15 +54,20 @@ def summary(dtf):
   sumary['Zeros']=(dtf == 0).sum().astype(str)+' ('+sumary['Zeros'].astype(str)+'%)'
   sumary=sumary[['Type','NaN','Zeros']]
   return
-
-print(summary(df))
 ```
 </details>
 
+This is how the data looks in the first place.
+
+```python
+df = pd.read_csv("/kaggle/input/uber-fares-dataset/uber.csv")
+print(summary(df))
+df.head()
+```
 ### Output
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/1.jpg?raw=true)
 
-Looks like we have at least 3k entries having nil latitudes and longitudes which does not seem to be valid here. Though it is generally not advisable to drop empty rows, this case is an exception as the empty entries only make up 1% of the dataset, we shouldn't waste time deducing the methodology to impute these empty values which could introduce biases to the data.
+Looks like we have at least 3k entries having nil latitudes and longitudes which does not seem to be valid here. Though it is generally not advisable to drop empty rows, this case is an exception as the empty entries only make up 1% of the dataset, we shouldn't waste time figuring how to impute these empty values as they could introduce biases to the data.
 
 We will do the same approach for zero values in fare_amount and the NaNs in dropoff_longitude and dropoff_latitude.
 
