@@ -53,3 +53,81 @@ print(summary(df))
 ### Output
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/1.jpg?raw=true)
 
+Looks like we have at least 3k entries having nil latitudes and longitudes which does not seem to be valid here. Though it is generally not advisable to drop empty rows, this case is an exception as the empty entries only make up 1% of the dataset, we shouldn't waste time deducing the methodology to impute these empty values which could introduce biases to the data.
+
+We will do the same approach for zero values in fare_amount and the NaNs in dropoff_longitude and dropoff_latitude.
+
+```
+df=df[df['pickup_longitude']!=0]
+df=df[df['pickup_latitude']!=0 | df['dropoff_longitude']!=0 | df['dropoff_latitude']!=0 | df['passenger_count']!=0]
+df.reset_index(inplace=True)
+df.drop(['index','key'], axis=1, inplace=True)
+df.rename(columns={"Unnamed: 0": "trip"}, inplace=True)
+
+print(summary(df))
+```
+## Mapping of Pickup and Dropoff Locations
+```
+mymap = folium.Map(location=[40.6970193,-74.3093268], zoom_start=4)
+marker_cluster = MarkerCluster(name='Pickups')
+marker_cluster2 = MarkerCluster(name='Dropoffs')
+marker_cluster.add_to(mymap)
+marker_cluster2.add_to(mymap)
+for index, row in df1.sample(n=5000, random_state=123).iterrows():
+  lb1, lb2 = row['trip'], row['fare_amount']
+  folium.Marker(location=[row['pickup_latitude'], row['pickup_longitude']], icon=folium.Icon(color='blue'), popup=row['trip']).add_to(marker_cluster)
+  folium.Marker(location=[row['dropoff_latitude'], row['dropoff_longitude']], icon=folium.Icon(color='red'), popup=row['trip']).add_to(marker_cluster2)
+  folium.LayerControl(collapsed=False).add_to(mymap)
+												
+formatter = "function(num) {return L.Util.formatNum(num, 5);};"
+mouse_position = MousePosition(
+  position='topright',
+  separator=' Long: ',
+  empty_string='NaN',
+  lng_first=False,
+  num_digits=20,
+  prefix='Lat:',
+  lat_formatter=formatter,
+  lng_formatter=formatter,
+  )
+												
+mymap.add_child(mouse_position)
+display(mymap)
+```
+By plotting the coordinates on a map, it is obvious that this driver is based in New York City. Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
+
+The zero entries removed earlier were just the tip of an iceberg, we need to screen through the coordinates and eliminate any anomalies such as:
+
+#### 1. Invalid coordinates
+latitudes and longitudes can only take on the following range of values, any value which falls outside these ranges are 100% invalid:
+* Latitudes: -90 to 90
+* Longitudes: -180 to 180
+```
+df[(abs(df['pickup_latitude'])>90)|(abs(df['dropoff_latitude'])>90)|(abs(df['dropoff_longitude'])>180)|(abs(df['pickup_longitude'])>180)].head(10)
+```
+
+#### 2. Swapped Latitude and Longitude Values 
+Some rides had their latitude and longitude pairs reversed by plotting the coordinates, this is where the Antartica coordinates came from:
+```
+df[(df['pickup_latitude']<-70) | (df['dropoff_latitude']<-70)].head()
+```		
+									
+#### 3. Intercontinential Travel
+There are also trips which spans across continents, and amazingly they all took less than $30, what a bang for a buck!								
+```
+df=df[abs(df['pickup_longitude']-df['dropoff_longitude'])<40]
+```
+									
+#### 4. Trips in the Ocean
+Obviously we can't have coordinates in the ocean:
+
+```
+df=df[abs(df['pickup_longitude'])>1]
+df=df[~(((df['pickup_latitude']<40.52) & (df['pickup_longitude']>-73.96)) | ((df['dropoff_latitude']<40.52) & (df['dropoff_longitude']>-73.96)))]
+```
+									
+#### 5. Identical Dropoff & Pickup Locations
+Seriously, why am I paying if your car didn't even budge? And surprisingly there were 1,316 of such trips!
+```
+df=df[(df['pickup_longitude']!= df['dropoff_longitude']) | (df['pickup_latitude']!= df['dropoff_latitude'])]
+```
