@@ -1,4 +1,5 @@
-# Data Visualization: Uber Fare Analysis
+<h1 align="center">Data Visualization: Uber Fare Analysis</h1>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/uber.jpg?raw=true)
 
 In 2023, *Uber* has a reported active drivers reaching 1.5 million in the United States alone, occupying up to 74% of the global e-hailing market.
