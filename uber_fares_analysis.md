@@ -219,7 +219,7 @@ display(mymap)
 
 By plotting the coordinates on a map, we know for sure that this driver is based in New York (Manhattan to be precise). Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/5.jpg'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/5.jpg' width='800'>
 
 The zero entries removed earlier were just the tip of an iceberg, we need to screen through the coordinates and eliminate any anomalies such as:
 
