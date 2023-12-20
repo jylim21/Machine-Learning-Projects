@@ -640,5 +640,184 @@ df['pickup_datetime'].head()
 Name: pickup_datetime, dtype: object
 </pre>
 However, looking back at the pickup_datetimes, there is another step required before we parse the datetimes into their respective components.
-Notice that the times are in the UTC timezone when New York follows the Eastern Time instead (UTC-4/-5)
+Notice that the data type is object instead of a datetime format, and the times are in the UTC timezone instead of the Eastern Time used by New York (UTC-4/-5).
 
+we can use the `pd.to_datetime()` and `dt.tz_convert()` to convert it into a datetime data type with its timezone adjusted to reflect Eastern Time (with Daylight Savings taken into account).
+
+<details>
+<summary>View Code</summary>
+	
+```python
+df.reset_index(inplace=True)
+df.drop(['index'], axis=1, inplace=True)
+df['pickup_datetime']=pd.to_datetime(df['pickup_datetime'])
+df['pickup_datetime']=df['pickup_datetime'].dt.tz_convert('America/New_York')
+df['Date'] = df['pickup_datetime'].dt.date
+df['Time'] = df['pickup_datetime'].dt.strftime('%H:%M')
+df['Year'] = df['pickup_datetime'].dt.year
+df['Month'] = df['pickup_datetime'].dt.month
+df['Day'] = df['pickup_datetime'].dt.day
+df['WeekDay'] = df['pickup_datetime'].dt.weekday
+df['Hour'] = df['pickup_datetime'].dt.hour
+df.head()
+```
+</details>
+
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+      <th>WeekDay</th>
+      <th>Hour</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>24238194</td>
+      <td>7.5</td>
+      <td>2015-05-07 15:52:06-04:00</td>
+      <td>-73.999817</td>
+      <td>40.738354</td>
+      <td>-73.999512</td>
+      <td>40.723217</td>
+      <td>1</td>
+      <td>2015-05-07</td>
+      <td>15:52</td>
+      <td>2015</td>
+      <td>5</td>
+      <td>7</td>
+      <td>3</td>
+      <td>15</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>27835199</td>
+      <td>7.7</td>
+      <td>2009-07-17 16:04:56-04:00</td>
+      <td>-73.994355</td>
+      <td>40.728225</td>
+      <td>-73.994710</td>
+      <td>40.750325</td>
+      <td>1</td>
+      <td>2009-07-17</td>
+      <td>16:04</td>
+      <td>2009</td>
+      <td>7</td>
+      <td>17</td>
+      <td>4</td>
+      <td>16</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>44984355</td>
+      <td>12.9</td>
+      <td>2009-08-24 17:45:00-04:00</td>
+      <td>-74.005043</td>
+      <td>40.740770</td>
+      <td>-73.962565</td>
+      <td>40.772647</td>
+      <td>1</td>
+      <td>2009-08-24</td>
+      <td>17:45</td>
+      <td>2009</td>
+      <td>8</td>
+      <td>24</td>
+      <td>0</td>
+      <td>17</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>25894730</td>
+      <td>5.3</td>
+      <td>2009-06-26 04:22:21-04:00</td>
+      <td>-73.976124</td>
+      <td>40.790844</td>
+      <td>-73.965316</td>
+      <td>40.803349</td>
+      <td>3</td>
+      <td>2009-06-26</td>
+      <td>04:22</td>
+      <td>2009</td>
+      <td>6</td>
+      <td>26</td>
+      <td>4</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>17610152</td>
+      <td>16.0</td>
+      <td>2014-08-28 13:47:00-04:00</td>
+      <td>-73.925023</td>
+      <td>40.744085</td>
+      <td>-73.973082</td>
+      <td>40.761247</td>
+      <td>5</td>
+      <td>2014-08-28</td>
+      <td>13:47</td>
+      <td>2014</td>
+      <td>8</td>
+      <td>28</td>
+      <td>3</td>
+      <td>13</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
+## Trip Distance Calculation
+Admit it, when we talk about factors influencing transportation fares, distance is probably the first thing that comes into our mind.
+
+Although there are many APIs out there to calculate the optimal driving distance between 2 points, we will refrain from using them this time due to the following limitations:
+* Performing requests on each row of this massive dataset is too time consuming
+* They are mostly paid services, and
+* Some of these APIs only return the shortest distance and doesn't take traffic congestion into account.
+
+We can still opt for an alternative to calculating the distance between pickup and dropoff points, which is using the **Haversine distance**.
+>**Haversine distance** is defined as the great-circle distance between two points on a sphere given their longitudes and latitudes, this assumes that the Earth is a sphere (sorry flat-earthers!)
+
+<details>
+<summary>View Code</summary>
+	
+```python
+def hvs(lat1, lon1, lat2, lon2):
+    # Convert latitude and longitude from degrees to radians
+    lat1, lon1, lat2, lon2 = np.radians([lat1, lon1, lat2, lon2])
+    d_lat = lat2 - lat1
+    d_lon = lon2 - lon1
+    a = np.sin(d_lat/2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(d_lon/2) ** 2
+    distance = 6371* 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+    return distance
+
+df['distance'] = df.apply(lambda row: hvs(row['pickup_latitude'], row['pickup_longitude'], row['dropoff_latitude'], row['dropoff_longitude']), axis=1)
+```
+</details>
+
+```python
+df['distance'].head()
+```
+
+### Output
+
+<pre>
+0    1.683323
+1    2.457590
+2    5.036377
+3    1.661683
+4    4.475450
+Name: distance, dtype: float64
+</pre>
