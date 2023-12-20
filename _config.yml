@@ -4,5 +4,5 @@ plugins:
 - jekyll-remote-theme
 
 pages:
-- uber_fares.md
-- laptop.md
+- uber_fares_analysis.md
+- laptop_price_prediction.md
