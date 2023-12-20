@@ -159,6 +159,7 @@ Price                     float64     0 (0%)  0 (0%)
 
 Nothing looks unusual except for Operating System Version, which has 136 (13%) NaN values. It might be tempting to remove them right away but since we have only 900+ data, it's better to understand the data further before dealing with it.
 
+## Data Cleansing
 By looking at the data types and dataframe, we have an idea on what should be done next:
 * Features such as Screen Size, RAM, Storage, and Weight are all formatted as objects instead of numerical data types, due to the presence of measurement units (eg. GB, kg) which are strings. These features have to be converted to numerical form before we can visualize it.
 * The Screen feature provides us with the following info, and should be broken down into:
@@ -171,3 +172,245 @@ By looking at the data types and dataframe, we have an idea on what should be do
   3. CPU speed (eg. 2.3GHz)
 * Besides Storage Capacity, we are also able to deduce the Storage type (eg. SSD, HDD) from the Storage feature.
 
+As a computer geek who is in touch with the latest tech releases, these features should definitely have an influence on the laptop prices, or could I be wrong? Let's find out in a moment.
+
+I combined the train and test data before cleansing to ensure the same transformation is applied to both data, we will split them again after the cleansing process.
+
+```python
+df=pd.concat([df_train,df_test])
+```
+
+And now we can proceed.
+
+**Warning**: Lot's of RegeX ahead, proceed with a calm mind!
+
+<details>
+<summary>View Code</summary>
+	
+```python
+# Splitting "Screen" column
+df['Screen Size']=df['Screen Size'].str.replace('"', '').astype(float)
+df['Resolution_1']=df['Screen'].str.rsplit('x', n=1).str[0].str[-4:].astype(int)
+df['Resolution_2']=df['Screen'].str.rsplit('x', n=1).str[1].str[-4:].astype(int)
+df['IPS Panel'] = (df['Screen'].str.contains('IPS Panel')).astype(int)
+df['Touchscreen'] = (df['Screen'].str.contains('Touchscreen')).astype(int)
+df['Retina Display'] = (df['Screen'].str.contains('Retina Display')).astype(int)
+
+# Extracting CPU_Speed from "CPU"
+df['CPU_Speed']=df['CPU'].str.rsplit(n=1).str.get(-1).str.replace('GHz', '').astype(float)
+df['CPU'] = df['CPU'].str.rsplit(n=1).str[0]
+
+# Splitting "Storage" into HDD, SSD, Flash Storage & hybrid storage volumes in GB
+df['SSD']=df[' Storage'].str.extract(r'\b(\w+)\s+SSD\b')
+df['HDD']=df[' Storage'].str.extract(r'\b(\w+)\s+HDD\b')
+df['Flash_Storage']=df[' Storage'].str.extract(r'\b(\w+)\s+Flash\sStorage\b')
+df['Hybrid']=df[' Storage'].str.extract(r'\b(\w+)\s+Hybrid\b')
+df['HDD']=df['HDD'].str.replace('TB','000GB').str.replace('GB','').fillna(0).astype(int)
+df['SSD']=df['SSD'].str.replace('TB','000GB').str.replace('GB','').fillna(0).astype(int)
+df['Flash_Storage']=df['Flash_Storage'].str.replace('TB','000GB').str.replace('GB','').fillna(0).astype(int)
+df['Hybrid']=df['Hybrid'].str.replace('TB','000GB').str.replace('GB','').fillna(0).astype(int)
+
+# Combine Operating System and its version
+df['OS'] = df['Operating System'] + ' ' + df['Operating System Version'].fillna(' ')
+
+# Other misc. cleansing steps
+df['RAM']=df['RAM'].str.replace('GB', '').astype(int)
+df['Weight']=df['Weight'].str.replace('kgs', '').str.replace('kg', '').astype(float)
+
+# Creating new Total_Storage feature
+df['Total_Storage']=df['SSD']+df['HDD']+df['Flash_Storage']+df['Hybrid']
+```
+</details>
+
+We then split the data into its original train and test entries.
+```
+df_train=df.iloc[0:len(df_train)]
+df_test=df.iloc[len(df_train):]
+```
+
+Looking at our final form:
+
+```
+summary(df_train)
+df_train.head(5)
+```
+### Output
+
+<pre>
+                             Type        NaN      Zeros
+Manufacturer               object     0 (0%)     0 (0%)
+Model Name                 object     0 (0%)     0 (0%)
+Category                   object     0 (0%)     0 (0%)
+Screen Size               float64     0 (0%)     0 (0%)
+Screen                     object     0 (0%)     0 (0%)
+CPU                        object     0 (0%)     0 (0%)
+RAM                         int64     0 (0%)     0 (0%)
+ Storage                   object     0 (0%)     0 (0%)
+GPU                        object     0 (0%)     0 (0%)
+Operating System           object     0 (0%)     0 (0%)
+Operating System Version   object  136 (13%)     0 (0%)
+Weight                    float64     0 (0%)     0 (0%)
+Price                     float64     0 (0%)     0 (0%)
+Resolution_1                int64     0 (0%)     0 (0%)
+Resolution_2                int64     0 (0%)     0 (0%)
+IPS Panel                   int64     0 (0%)  697 (71%)
+Touchscreen                 int64     0 (0%)  836 (85%)
+Retina Display              int64     0 (0%)  963 (98%)
+CPU_Speed                 float64     0 (0%)     0 (0%)
+SSD                         int64     0 (0%)  324 (33%)
+HDD                         int64     0 (0%)  556 (56%)
+Flash_Storage               int64     0 (0%)  922 (94%)
+Hybrid                      int64     0 (0%)  975 (99%)
+OS                         object     0 (0%)     0 (0%)
+Total_Storage               int64     0 (0%)     0 (0%)
+</pre>
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align:right">
+      <th></th>
+      <th>Manufacturer</th>
+      <th>Model Name</th>
+      <th>Category</th>
+      <th>Screen Size</th>
+      <th>Screen</th>
+      <th>CPU</th>
+      <th>RAM</th>
+      <th>Storage</th>
+      <th>GPU</th>
+      <th>Operating System</th>
+      <th>...</th>
+      <th>IPS Panel</th>
+      <th>Touchscreen</th>
+      <th>Retina Display</th>
+      <th>CPU_Speed</th>
+      <th>SSD</th>
+      <th>HDD</th>
+      <th>Flash_Storage</th>
+      <th>Hybrid</th>
+      <th>OS</th>
+      <th>Total_Storage</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>Apple</td>
+      <td>MacBook Pro</td>
+      <td>Ultrabook</td>
+      <td>13.3</td>
+      <td>IPS Panel Retina Display 2560x1600</td>
+      <td>Intel Core i5</td>
+      <td>8</td>
+      <td>128GB SSD</td>
+      <td>Intel Iris Plus Graphics 640</td>
+      <td>macOS</td>
+      <td>...</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>2.3</td>
+      <td>128</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>macOS</td>
+      <td>128</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Apple</td>
+      <td>Macbook Air</td>
+      <td>Ultrabook</td>
+      <td>13.3</td>
+      <td>1440x900</td>
+      <td>Intel Core i5</td>
+      <td>8</td>
+      <td>128GB Flash Storage</td>
+      <td>Intel HD Graphics 6000</td>
+      <td>macOS</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1.8</td>
+      <td>0</td>
+      <td>0</td>
+      <td>128</td>
+      <td>0</td>
+      <td>macOS</td>
+      <td>128</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>HP</td>
+      <td>250 G6</td>
+      <td>Notebook</td>
+      <td>15.6</td>
+      <td>Full HD 1920x1080</td>
+      <td>Intel Core i5 7200U</td>
+      <td>8</td>
+      <td>256GB SSD</td>
+      <td>Intel HD Graphics 620</td>
+      <td>No OS</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>2.5</td>
+      <td>256</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>No OS</td>
+      <td>256</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Apple</td>
+      <td>MacBook Pro</td>
+      <td>Ultrabook</td>
+      <td>15.4</td>
+      <td>IPS Panel Retina Display 2880x1800</td>
+      <td>Intel Core i7</td>
+      <td>16</td>
+      <td>512GB SSD</td>
+      <td>AMD Radeon Pro 455</td>
+      <td>macOS</td>
+      <td>...</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>2.7</td>
+      <td>512</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>macOS</td>
+      <td>512</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Apple</td>
+      <td>MacBook Pro</td>
+      <td>Ultrabook</td>
+      <td>13.3</td>
+      <td>IPS Panel Retina Display 2560x1600</td>
+      <td>Intel Core i5</td>
+      <td>8</td>
+      <td>256GB SSD</td>
+      <td>Intel Iris Plus Graphics 650</td>
+      <td>macOS</td>
+      <td>...</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>3.1</td>
+      <td>256</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>macOS</td>
+      <td>256</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
