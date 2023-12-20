@@ -788,7 +788,8 @@ Although there are many APIs out there to calculate the optimal driving distance
 * Some of these APIs only return the shortest distance and doesn't take traffic congestion into account.
 
 We can still opt for an alternative to calculating the distance between pickup and dropoff points, which is using the **Haversine distance**.
->**Haversine distance** is defined as the great-circle distance between two points on a sphere given their longitudes and latitudes, this assumes that the Earth is a sphere (sorry flat-earthers!)
+>**Haversine distance** is defined as the great-circle distance between two points on a sphere given their longitudes and latitudes, this assumes that the Earth is a perfect sphere (sorry flat-earthers!)
+Although the Haversine distance is less superior compared to the driving distance, it generalises the distance for each trip and is less prone to overfitting the dataset.
 
 <details>
 <summary>View Code</summary>
@@ -821,3 +822,55 @@ df['distance'].head()
 4    4.475450
 Name: distance, dtype: float64
 </pre>
+
+## Exploratory Data Analysis
+### Univariate Analysis
+We haven't touch on the numerical features yet, we should probably have a look on each variable:
+
+```python
+fig, axs = plt.subplots(1, 2, figsize=(10, 1))
+sns.boxplot(data=df['fare_amount'],orient='h', ax=axs[0]).set(title='fare_amount')
+sns.boxplot(data=df['passenger_count'], orient='h', ax=axs[1]).set(title='passenger_count')
+plt.show()
+```
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/6.png'>
+There might seem a little too many extreme values in the fare_amount, but don't forget this is a really massive dataset so it is acceptable. 
+As for passenger_count, it looks like most of the trips have 1 to 2 passengers which is reasonable since Uber cars are mostly 4-seaters.
+
+### Bivariate Analysis
+```python
+sns.boxplot(data=df, y='passenger_count', x='fare_amount', orient='h')
+```
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/9.png'>
+
+Although at first glance it seems that fares for 1 passenger are higher, but if we look closely, they are all outliers and in fact, they all have the same quartiles. This means fares are not determined by number of passengers.
+
+Don't believe? Let's zoom in onto the quartiles:
+```python
+sns.boxplot(data=df[df['fare_amount']<30], y='passenger_count', x='fare_amount', orient='h')
+df.groupby('passenger_count')['fare_amount'].describe()
+```
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/10.png'>
+
+<pre>
+                    count       mean        std   min  25%  50%   75%     max
+passenger_count                                                              
+1                134075.0  11.229843   9.601384  0.01  6.0  8.5  12.5  220.00
+2                 28555.0  11.778504  10.129457  2.50  6.1  8.5  13.0  230.00
+3                  8624.0  11.449652   9.490586  2.50  6.1  8.5  12.9  120.30
+4                  4146.0  11.666331   9.942237  2.50  6.1  8.5  12.9  132.33
+5                 13547.0  11.245369   9.288177  2.50  6.0  8.5  12.5  100.50
+6                  4145.0  12.185884  10.148115  2.50  6.5  9.0  13.7  152.83
+</pre>
+
+From above, it sseems that the interquartile range (75% percentile minus 25% percentile) for fare_amounts are approximately 6.7 ± 0.2 for all passenger counts, with an exception of 6 passengers which is slightly higher than the rest, however the difference isn't too significant here.
+
+## Hourly Comparison
+
+
+Based on the figure, 
+Fares are exceptionally higher past midnight from 12am to 2am, probably due to lesser drivers available.
+In the daytime, fares do not differ much in gereral from 5am to 4pm, but a steep increase is observed after 4pm until midnight.
