@@ -1,4 +1,4 @@
-<h1 align="center">Uber Fares Analysis</h1>
+<h1 align="center">Data Visualization: Uber Fares Analysis</h1>
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/uber.jpg?raw=true)
 
