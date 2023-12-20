@@ -1,4 +1,4 @@
-<h1 align="center">Data Visualization: Uber Fare Analysis</h1>
+<h1 align="center">Laptop Price Prediction</h1>
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/uber.jpg?raw=true)
 
