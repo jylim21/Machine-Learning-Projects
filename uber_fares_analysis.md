@@ -230,29 +230,415 @@ latitudes and longitudes can only take on the following range of values, any val
 ```python
 df[(abs(df['pickup_latitude'])>90)|(abs(df['dropoff_latitude'])>90)|(abs(df['dropoff_longitude'])>180)|(abs(df['pickup_longitude'])>180)].head(10)
 ```
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+    </tr>
+    <tr>
+      <th>4852</th>
+      <td>42931506</td>
+      <td>4.9</td>
+      <td>2012-04-28 00:58:00 UTC</td>
+      <td>-748.016667</td>
+      <td>40.739957</td>
+      <td>-74.003570</td>
+      <td>40.734192</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>31806</th>
+      <td>5634081</td>
+      <td>15.7</td>
+      <td>2012-06-16 10:04:00 UTC</td>
+      <td>-74.016055</td>
+      <td>40.715155</td>
+      <td>-737.916665</td>
+      <td>40.697862</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>47421</th>
+      <td>1055960</td>
+      <td>33.7</td>
+      <td>2011-11-05 23:26:00 UTC</td>
+      <td>-735.200000</td>
+      <td>40.770092</td>
+      <td>-73.980187</td>
+      <td>40.765530</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>55313</th>
+      <td>14257861</td>
+      <td>8.1</td>
+      <td>2012-03-11 07:24:00 UTC</td>
+      <td>-73.960828</td>
+      <td>404.433332</td>
+      <td>-73.988357</td>
+      <td>40.769037</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>60372</th>
+      <td>2849369</td>
+      <td>8.5</td>
+      <td>2012-06-13 05:45:00 UTC</td>
+      <td>-73.951385</td>
+      <td>401.066667</td>
+      <td>-73.982110</td>
+      <td>40.754117</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
 
 ### 2. Swapped Latitude and Longitude Values 
 Some rides had their latitude and longitude pairs reversed by plotting the coordinates, this is where the Antartica coordinates came from:
 ```python
 df[(df['pickup_latitude']<-70) | (df['dropoff_latitude']<-70)].head()
 ```		
-									
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+    </tr>
+    <tr>
+      <th>2441</th>
+      <td>6452891</td>
+      <td>6.0</td>
+      <td>2013-05-22 10:54:00 UTC</td>
+      <td>40.746760</td>
+      <td>-73.982127</td>
+      <td>40.757287</td>
+      <td>-73.974800</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4287</th>
+      <td>44648183</td>
+      <td>12.5</td>
+      <td>2013-05-24 00:43:00 UTC</td>
+      <td>40.751797</td>
+      <td>-73.970777</td>
+      <td>40.719787</td>
+      <td>-73.992137</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>4335</th>
+      <td>3826665</td>
+      <td>9.5</td>
+      <td>2013-05-25 01:16:00 UTC</td>
+      <td>40.732897</td>
+      <td>-73.997740</td>
+      <td>40.747532</td>
+      <td>-73.972540</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4653</th>
+      <td>52635142</td>
+      <td>6.5</td>
+      <td>2013-05-22 12:38:00 UTC</td>
+      <td>40.770667</td>
+      <td>-73.961957</td>
+      <td>40.761672</td>
+      <td>-73.967237</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>7219</th>
+      <td>45851743</td>
+      <td>10.5</td>
+      <td>2013-05-23 00:29:00 UTC</td>
+      <td>40.714897</td>
+      <td>-74.009697</td>
+      <td>40.726197</td>
+      <td>-73.994370</td>
+      <td>2</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
 ### 3. Intercontinential Travel
 There are also trips which spans across continents, and amazingly they all took less than $30, what a bang for a buck!								
 ```python
-df=df[abs(df['pickup_longitude']-df['dropoff_longitude'])<40]
+df[abs(df['pickup_longitude']-df['dropoff_longitude'])>40].head()
 ```
-									
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+    </tr>
+    <tr>
+      <th>1900</th>
+      <td>915515</td>
+      <td>7.0</td>
+      <td>2013-02-10 16:18:00 UTC</td>
+      <td>-0.131667</td>
+      <td>40.757063</td>
+      <td>-73.991593</td>
+      <td>40.749953</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2118</th>
+      <td>7976070</td>
+      <td>5.7</td>
+      <td>2012-07-21 12:16:00 UTC</td>
+      <td>-1.216667</td>
+      <td>40.748597</td>
+      <td>-74.004822</td>
+      <td>40.734670</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4852</th>
+      <td>42931506</td>
+      <td>4.9</td>
+      <td>2012-04-28 00:58:00 UTC</td>
+      <td>-748.016667</td>
+      <td>40.739957</td>
+      <td>-74.003570</td>
+      <td>40.734192</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>6468</th>
+      <td>32571365</td>
+      <td>9.3</td>
+      <td>2012-06-05 19:05:00 UTC</td>
+      <td>-1.866667</td>
+      <td>40.765987</td>
+      <td>-73.972280</td>
+      <td>40.793807</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>11631</th>
+      <td>16955954</td>
+      <td>14.9</td>
+      <td>2012-02-26 00:01:00 UTC</td>
+      <td>-0.007712</td>
+      <td>40.725602</td>
+      <td>-73.967487</td>
+      <td>40.766410</td>
+      <td>5</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+	 
 ### 4. Trips in the Ocean
 Obviously we can't have coordinates in the ocean:
 
 ```python
-df=df[abs(df['pickup_longitude'])>1]
-df=df[~(((df['pickup_latitude']<40.52) & (df['pickup_longitude']>-73.96)) | ((df['dropoff_latitude']<40.52) & (df['dropoff_longitude']>-73.96)))]
+df[(abs(df['pickup_longitude'])<1) | (abs(df['dropoff_longitude'])<1)].head()
 ```
-									
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+    </tr>
+    <tr>
+      <th>163</th>
+      <td>17269533</td>
+      <td>14.5</td>
+      <td>2010-07-14 17:38:00 UTC</td>
+      <td>0.001782</td>
+      <td>0.007380</td>
+      <td>0.000875</td>
+      <td>0.005670</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1900</th>
+      <td>915515</td>
+      <td>7.0</td>
+      <td>2013-02-10 16:18:00 UTC</td>
+      <td>-0.131667</td>
+      <td>40.757063</td>
+      <td>-73.991593</td>
+      <td>40.749953</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>11631</th>
+      <td>16955954</td>
+      <td>14.9</td>
+      <td>2012-02-26 00:01:00 UTC</td>
+      <td>-0.007712</td>
+      <td>40.725602</td>
+      <td>-73.967487</td>
+      <td>40.766410</td>
+      <td>5</td>
+    </tr>
+    <tr>
+      <th>22602</th>
+      <td>10365124</td>
+      <td>10.9</td>
+      <td>2010-10-09 22:53:00 UTC</td>
+      <td>-0.076468</td>
+      <td>0.087237</td>
+      <td>-0.079742</td>
+      <td>0.097257</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>35835</th>
+      <td>24351230</td>
+      <td>11.7</td>
+      <td>2010-06-12 11:55:00 UTC</td>
+      <td>0.013518</td>
+      <td>0.001857</td>
+      <td>0.010920</td>
+      <td>0.010308</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+  
 #### 5. Identical Dropoff & Pickup Locations
 Seriously, why am I paying if your car didn't even budge? And surprisingly there were 1,316 of such trips!
 ```python
-df=df[(df['pickup_longitude']!= df['dropoff_longitude']) | (df['pickup_latitude']!= df['dropoff_latitude'])]
+df[(df['pickup_latitude'] == df['dropoff_latitude']) & (df['dropoff_longitude'] == df['pickup_longitude'])].head()
 ```
+### Output
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>trip</th>
+      <th>fare_amount</th>
+      <th>pickup_datetime</th>
+      <th>pickup_longitude</th>
+      <th>pickup_latitude</th>
+      <th>dropoff_longitude</th>
+      <th>dropoff_latitude</th>
+      <th>passenger_count</th>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>44470845</td>
+      <td>4.90</td>
+      <td>2011-02-12 02:27:09 UTC</td>
+      <td>-73.969019</td>
+      <td>40.755910</td>
+      <td>-73.969019</td>
+      <td>40.755910</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>46</th>
+      <td>22405517</td>
+      <td>56.80</td>
+      <td>2013-01-03 22:24:41 UTC</td>
+      <td>-73.993498</td>
+      <td>40.764686</td>
+      <td>-73.993498</td>
+      <td>40.764686</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>81</th>
+      <td>25485719</td>
+      <td>49.57</td>
+      <td>2009-08-07 10:43:07 UTC</td>
+      <td>-73.975058</td>
+      <td>40.788820</td>
+      <td>-73.975058</td>
+      <td>40.788820</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>160</th>
+      <td>54642873</td>
+      <td>4.50</td>
+      <td>2014-01-22 21:01:18 UTC</td>
+      <td>-73.992937</td>
+      <td>40.757780</td>
+      <td>-73.992937</td>
+      <td>40.757780</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>351</th>
+      <td>11876316</td>
+      <td>10.10</td>
+      <td>2009-08-24 17:25:00 UTC</td>
+      <td>-73.928705</td>
+      <td>40.753475</td>
+      <td>-73.928705</td>
+      <td>40.753475</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
+## Date & Time Feature Extraction
+The pickup date & time could tell us a lot more on the fare evolution such as the following:
+* Year-to-Year comparison to observe if there is a price hike due to inflation
+* Day of week comparison to visualize if there are significant difference in fares on weekdays and weekends.
+* Hourly comparison to see if there are any significant price hikes during peak hours.
+
+```python
+df['pickup_datetime'].head()
+```
+### Output
+<pre>
+0    2015-05-07 19:52:06 UTC
+1    2009-07-17 20:04:56 UTC
+2    2009-08-24 21:45:00 UTC
+3    2009-06-26 08:22:21 UTC
+4    2014-08-28 17:47:00 UTC
+Name: pickup_datetime, dtype: object
+</pre>
+However, looking back at the pickup_datetimes, there is another step required before we parse the datetimes into their respective components.
+Notice that the times are in the UTC timezone when New York follows the Eastern Time instead (UTC-4/-5)
+
