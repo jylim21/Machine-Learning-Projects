@@ -1007,3 +1007,406 @@ Mean Absolute Error:  2,146,615.12
 Root Mean Squared Error:  3,073,002.35
 </pre>
 
+The Linear Regression model was able to fit with 73% R-squared, although not too impressive but it could help us identify the main drivers of the laptop prices.
+
+### An extension to Linear Regression - Ridge Regression (L2)
+Since we have 60 features above, the Linear Regression model could be prone to overfitting. This could be mitigated by introducing a L2 regularization factor to surpress less important features.
+
+```python
+def objective(trial):
+    alpha = trial.suggest_float('alpha', 0.0001, 10.0, log=True)
+    
+    model = Ridge(alpha=alpha)
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+RR=Ridge(**best_params)
+RR.fit(x_train, y_train)
+y_pred = RR.predict(x_test)
+print("Ridge Regression Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Ridge Regression Results
+R-squared:  0.7367
+Mean Absolute Error:  2,134,474.55
+Root Mean Squared Error:  3,045,033.43
+</pre>
+
+Despite having a R-squared of 74%, there is no significant improvement from the Linear Regression model.
+
+### Decision Tree
+The **Decision Tree** is another interpretable algorithm which tells us how it arrives at its predictions starting from the top of the tree, all the way down to it's node.
+
+However there are many parameters here to optimize for the best performance. To handle all these dirty work, we will utilize **Optuna** to find the optimal parameters which yields the **highest R-squared** metric.
+
+```python
+def objective(trial):
+    criterion = trial.suggest_categorical('criterion', ['squared_error', 'friedman_mse','absolute_error', 'poisson'])
+    #splitter = trial.suggest_categorical('splitter', ['best','random'])
+    max_depth = trial.suggest_int('max_depth', 6, 10)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 50)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    #max_features = trial.suggest_categorical('max_features', ['auto','sqrt','log2'])
+    #random_state = trial.suggest_int('random_state', 1, 30)
+
+    model = DecisionTreeRegressor(criterion=criterion,
+                                  splitter='best',
+                                  max_depth=max_depth,
+                                  min_samples_split=min_samples_split,
+                                  min_samples_leaf=min_samples_leaf,
+                                  max_features='auto',
+                                  random_state=20
+                                 )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+DT=DecisionTreeRegressor(**best_params)
+DT.fit(x_train, y_train)
+y_pred = DT.predict(x_test)
+print("Decision Tree Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Decision Tree Results
+R-squared:  0.7179
+Mean Absolute Error:  2,091,154.57
+Root Mean Squared Error:  3,151,694.65
+</pre>
+
+### Distance based algorithms - SVM and KNN
+For algorithms such as Support Vector Regressor and K-Nearest Neighbors which are sensitive to distance between points, we have to scale them to a fixed ranged before training them.
+
+```python
+# Scaling of features
+numeric_col=list(x_train.columns)
+x_train_scaled=MinMaxScaler().fit_transform(x_train[numeric_col])
+x_test_scaled=MinMaxScaler().fit_transform(x_test[numeric_col])
+```
+
+## Support Vector Machine
+
+```python
+def objective(trial):
+    loss=trial.suggest_categorical('loss',['epsilon_insensitive','squared_epsilon_insensitive'])
+    tol=trial.suggest_float('tol',0.001,0.1)
+    C=trial.suggest_float('C',0.001,1)
+    epsilon=trial.suggest_float('epsilon',0.01,0.1)
+    fit_intercept=trial.suggest_categorical('fit_intercept',['True','False'])
+    intercept_scaling=trial.suggest_float('intercept_scaling',0.001,10)
+    max_iter=trial.suggest_int('max_iter',2,1000)
+    random_state = trial.suggest_int('random_state', 1, 30)
+
+    model = LinearSVR(loss=loss, 
+                      tol=tol, 
+                      C=C, 
+                      epsilon=epsilon, 
+                      fit_intercept=fit_intercept, 
+                      intercept_scaling=intercept_scaling, 
+                      max_iter=max_iter,
+                      random_state=random_state)
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train_scaled, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+SVR=LinearSVR(**best_params)
+SVR.fit(x_train_scaled, y_train)
+y_pred = SVR.predict(x_test_scaled)
+print("Linear SVM Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Linear SVM Results
+R-squared:  0.6861
+Mean Absolute Error:  2,285,553.15
+Root Mean Squared Error:  3,324,633.25
+</pre>
+
+## K-Nearest Neighbors
+
+```python
+def objective(trial):
+    n_neighbors = trial.suggest_int('n_neighbors', 1, 20)
+    weights = trial.suggest_categorical('weights', ['uniform', 'distance'])
+    algorithm = trial.suggest_categorical('algorithm', ['auto', 'ball_tree', 'kd_tree', 'brute'])
+    p = trial.suggest_int('p', 1, 2)
+    leaf_size = trial.suggest_int('leaf_size', 1, 50)
+
+    model = KNeighborsRegressor(n_neighbors=n_neighbors, 
+                                weights=weights, 
+                                algorithm=algorithm,
+                                p=p,
+                                leaf_size=leaf_size,
+                               )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train_scaled, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+KNN=KNeighborsRegressor(**best_params)
+KNN.fit(x_train_scaled, y_train)
+y_pred = KNN.predict(x_test_scaled)
+print("K-Nearest Neighbors Result")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+K-Nearest Neighbors Result
+R-squared:  0.6969
+Mean Absolute Error:  2,118,331.90
+Root Mean Squared Error:  3,267,188.23
+</pre>
+
+**It seems that the Linear/Ridge Regression model is the ideal model here with the highest R-squared and lowest MAE/RMSE. So we will use it to interpret our results later.**
+
+### Feature Importances
+* Contrary to 'our' prior belief, hardware specs are **not** the main factors in determining the laptop prices, but it is instead determined by the **Manufacturer** brands only. 
+* From the chart below, we can deduce that the **costliest laptops** are often manufactured by **Razer**, and this is followed by laptops manufactured by **Microsoft**, **Google**, **LG**, and **Huawei**.
+* However, this does not mean hardware specifications do not matter at all, as **CPU Speed**, **Category**, and **Weight** still has a minor impact on the prices. 
+* **CPU, GPU, Screen**, and **Storage** features do not have a place in determining the prices.
+
+```python
+# Plotting
+sorted_feature_coefficients = sorted(zip(x_train.columns, LR.coef_), key=lambda x: abs(x[1]), reverse=False)
+sorted_feature_names, sorted_coefficients = zip(*sorted_feature_coefficients)
+plt.figure(figsize=(10, 15))
+plt.barh(sorted_feature_names, sorted_coefficients, color='skyblue')
+plt.xlabel('Coefficient Value')
+plt.ylabel('Feature Names')
+plt.title('Ridge Regression Feature Importances')
+plt.grid(axis='x', linestyle='--', alpha=0.5)
+plt.show()
+```
+
+### Output
+
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/8.png' width='800'>
+
+## Ensemble - Random Forest, GBM, LGBM, XGB
+Since the previous algorithms does not seem to meet our expectations, if we are merely interested in improving prediction accuracy, we could try out some Ensemble algorithms to improve our predictions:
+
+## Random Forest
+
+```python
+def objective(trial):
+    # Define the hyperparameters to optimize
+    criterion = trial.suggest_categorical('criterion', ['squared_error', 'friedman_mse','absolute_error'])#, 'poisson'
+    max_depth = trial.suggest_int('max_depth', 5, 15)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 20)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    #max_features = trial.suggest_categorical('max_features', ['sqrt','log2'])
+    random_state = trial.suggest_int('random_state', 1, 30)
+    model = RandomForestRegressor(criterion=criterion, 
+                                  max_depth=max_depth, 
+                                  min_samples_split=min_samples_split, 
+                                  min_samples_leaf=min_samples_leaf, 
+                                  max_features='sqrt',
+                                  random_state=random_state
+                                 )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=5)
+best_params = study.best_params
+
+RF=RandomForestRegressor(**best_params)
+RF.fit(x_train, y_train)
+y_pred = RF.predict(x_test)
+print("Random Forest Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Random Forest Results
+R-squared:  0.7349
+Mean Absolute Error:  1,953,317.51
+Root Mean Squared Error:  3,055,142.42
+</pre>
+
+# Gradient Boost
+
+```python
+def objective(trial):
+    loss = trial.suggest_categorical('loss', ['squared_error', 'absolute_error', 'huber'])#, 'quantile'
+    criterion = trial.suggest_categorical('criterion', ['squared_error', 'friedman_mse'])
+    n_estimators = trial.suggest_int('n_estimators', 5, 50)
+    max_depth = trial.suggest_int('max_depth', 5, 30)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 15)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    max_features = trial.suggest_categorical('max_features', ['auto','sqrt','log2'])
+    #random_state = trial.suggest_int('random_state', 1, 30)
+
+    model = GradientBoostingRegressor(loss=loss, 
+                                      criterion=criterion, 
+                                      max_depth=max_depth, 
+                                      min_samples_split=min_samples_split, 
+                                      min_samples_leaf=min_samples_leaf, 
+                                      max_features=max_features,
+                                      random_state=14
+                                     )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=5)
+best_params = study.best_params
+
+GB=GradientBoostingRegressor(**best_params)
+GB.fit(x_train, y_train)
+y_pred = GB.predict(x_test)
+print("Gradient Boosting Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Gradient Boosting Results
+R-squared:  0.7208
+Mean Absolute Error:  1,917,422.00
+Root Mean Squared Error:  3,135,782.16
+</pre>
+
+## Light GBM
+
+```python
+def objective(trial):
+    num_leaves= trial.suggest_int('num_leaves', 2, 50)
+    learning_rate= trial.suggest_float('learning_rate', 0.001, 0.1)
+    #feature_fraction= trial.suggest_float('feature_fraction', 0.1, 1.0)
+    #bagging_fraction= trial.suggest_float('bagging_fraction', 0.1, 1.0)
+    reg_alpha= trial.suggest_float('reg_alpha', 0.0, 1.0)
+    reg_lambda= trial.suggest_float('reg_lambda', 0.0, 1.0)
+    random_state= trial.suggest_int('random_state', 0, 42)
+        
+    model = LGBMRegressor(num_leaves=num_leaves, 
+                         learning_rate=learning_rate,
+                         #feature_fraction=feature_fraction, 
+                         #bagging_fraction=bagging_fraction, 
+                         reg_alpha=reg_alpha,
+                         reg_lambda=reg_lambda,
+                         random_state=random_state
+                        )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=5)
+best_params = study.best_params
+
+LG=LGBMRegressor(**best_params)
+LG.fit(x_train, y_train)
+y_pred = LG.predict(x_test)
+print("LightGBM Result")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+LightGBM Result
+R-squared:  0.7384
+Mean Absolute Error:  1,909,419.70
+Root Mean Squared Error:  3,035,286.42
+</pre>
+
+## XGBoost
+
+```python
+def objective(trial):
+    eta = trial.suggest_float('eta', 0.01,0.9)
+    #min_child_weights = trial.suggest_float('min_child_weights', 0.1, 1)
+    max_depth = trial.suggest_int('max_depth', 5, 20)
+    gamma=trial.suggest_float('gamma',0.5,1)
+    subsample = trial.suggest_float('subsample', 0.2,1)
+    #random_state = trial.suggest_int('random_state', 1, 30)
+    model = XGBRegressor(eta=eta, 
+                         #min_child_weights=min_child_weights,
+                         max_depth=max_depth, 
+                         gamma=gamma, 
+                         subsample=subsample,
+                         reg_lambda=2,
+                         random_state=23
+                        )
+
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=5)
+best_params = study.best_params
+
+XG=XGBRegressor(**best_params)
+XG.fit(x_train, y_train)
+y_pred = XG.predict(x_test)
+print("XGBoost Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+XGBoost Results
+R-squared:  0.7771
+Mean Absolute Error:  1,805,740.25
+Root Mean Squared Error:  2,801,565.01
+</pre>
+
+All ensemble algorithms indeed yielded a better performance than the previous models, with **XGBoost** being the best performer here with **77% R-squared** and **2.8E6 RMSE**.
