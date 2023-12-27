@@ -12,7 +12,10 @@ As *AMD* and *Apple* chips become more popular in laptops, did that translate to
 The dataset used here is the [Laptop Price Prediction Dataset](https://www.kaggle.com/datasets/arnabchaki/laptop-price-prediction) by *RANDOMARNAB* which can be found on Kaggle, it is comprised of 977 laptops from brands such as Dell, HP, Apple, Acer etc. along with their relevant hardware specifications, not a big dataset I would say.
 
 As usual, we will begin with importing the common libraries such as pandas, numpy, matplotlib, and seaborn, along with my custom function which counts the occurrences of NaNs / Zeroes:
-	
+
+<details>
+<summary>View Code</summary>
+
 ```python
 import pandas as pd
 import numpy as np
@@ -61,6 +64,7 @@ def pair_plot(df):
     g.fig.suptitle('Pairplot of Numerical Variables', y=1.02)
     plt.show()
 ```
+</details>
 
 If you are not familiar with this custom function, here is a demonstration of it which I always use as the first step:
 
@@ -578,6 +582,9 @@ sns.heatmap(df_train[['Price','RAM','SSD','Category','Resolution_1','Intel_Core_
 
 Distribution of Weight is observed to be positively skewed. By taking a log-transformation approach, we manage to normalize it despite having a few stubborn outliers.
 
+<details>
+<summary>View Code</summary>
+
 ```python
 fig, axs = plt.subplots(2, 2, figsize=(10, 5), gridspec_kw={'height_ratios': [1, 5]})
 sns.boxplot(x=df_train['Weight'], orient='h', ax=axs[0, 0])
@@ -598,6 +605,7 @@ plt.show()
 df_train['Weight']=np.log(df_train['Weight'])
 df_test['Weight']=np.log(df_test['Weight'])
 ```
+</details>
 
 ### Output
 
@@ -949,6 +957,9 @@ Some of the algorithms used here are:
 * XGBoost
 * ElasticNet
 
+<details>
+<summary>View Code</summary>
+
 ```python
 import optuna
 from sklearn.metrics import r2_score, make_scorer
@@ -971,11 +982,15 @@ x_test=df_test.drop(['Price'],axis=1)
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 ```
+</details>
 
 ### Baseline Algorithm - Linear Regression
 Ideally we would start off by using the simplest **Linear Regression** algorithm as it is the easiest to interpret, although it might not perform as well as other more complex algorithms.
 
 A **10-fold cross validation** will be performed on the training set before experimenting it on the test set to evaluate the model performance, hopefully the performance on the test set would not differ too much from the cross-validation performance otherwise it would be a sign of overfitting.
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -998,6 +1013,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1011,6 +1027,9 @@ The Linear Regression model was able to fit with 73% R-squared, although not too
 
 ### An extension to Linear Regression - Ridge Regression (L2)
 Since we have 60 features above, the Linear Regression model could be prone to overfitting. This could be mitigated by introducing a L2 regularization factor to surpress less important features.
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1034,6 +1053,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1049,6 +1069,9 @@ Despite having a R-squared of 74%, there is no significant improvement from the 
 The **Decision Tree** is another interpretable algorithm which tells us how it arrives at its predictions starting from the top of the tree, all the way down to it's node.
 
 However there are many parameters here to optimize for the best performance. To handle all these dirty work, we will utilize **Optuna** to find the optimal parameters which yields the **highest R-squared** metric.
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1086,6 +1109,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1105,7 +1129,10 @@ x_train_scaled=MinMaxScaler().fit_transform(x_train[numeric_col])
 x_test_scaled=MinMaxScaler().fit_transform(x_test[numeric_col])
 ```
 
-## Support Vector Machine
+### Support Vector Machine
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1144,6 +1171,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1153,7 +1181,10 @@ Mean Absolute Error:  2,285,553.15
 Root Mean Squared Error:  3,324,633.25
 </pre>
 
-## K-Nearest Neighbors
+### K-Nearest Neighbors
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1187,6 +1218,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1204,6 +1236,9 @@ Root Mean Squared Error:  3,267,188.23
 * However, this does not mean hardware specifications do not matter at all, as **CPU Speed**, **Category**, and **Weight** still has a minor impact on the prices. 
 * **CPU, GPU, Screen**, and **Storage** features do not have a place in determining the prices.
 
+<details>
+<summary>View Code</summary>
+
 ```python
 # Plotting
 sorted_feature_coefficients = sorted(zip(x_train.columns, LR.coef_), key=lambda x: abs(x[1]), reverse=False)
@@ -1216,6 +1251,7 @@ plt.title('Ridge Regression Feature Importances')
 plt.grid(axis='x', linestyle='--', alpha=0.5)
 plt.show()
 ```
+</details>
 
 ### Output
 
@@ -1224,7 +1260,10 @@ plt.show()
 ## Ensemble - Random Forest, GBM, LGBM, XGB
 Since the previous algorithms does not seem to meet our expectations, if we are merely interested in improving prediction accuracy, we could try out some Ensemble algorithms to improve our predictions:
 
-## Random Forest
+### Random Forest
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1260,6 +1299,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1269,7 +1309,10 @@ Mean Absolute Error:  1,953,317.51
 Root Mean Squared Error:  3,055,142.42
 </pre>
 
-# Gradient Boost
+### Gradient Boost
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1308,6 +1351,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1317,7 +1361,10 @@ Mean Absolute Error:  1,917,422.00
 Root Mean Squared Error:  3,135,782.16
 </pre>
 
-## Light GBM
+### Light GBM
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1355,6 +1402,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
@@ -1364,7 +1412,10 @@ Mean Absolute Error:  1,909,419.70
 Root Mean Squared Error:  3,035,286.42
 </pre>
 
-## XGBoost
+### XGBoost
+
+<details>
+<summary>View Code</summary>
 
 ```python
 def objective(trial):
@@ -1400,6 +1451,7 @@ print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
 print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
 print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
 ```
+</details>
 
 ### Output
 <pre>
