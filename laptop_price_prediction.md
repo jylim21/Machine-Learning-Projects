@@ -508,4 +508,502 @@ sns.set(rc={'figure.figsize':(15,8.27)})
 print(ax.bar_label(container=ax.containers[0], labels=df_train['Manufacturer'].value_counts(ascending=False).values))
 ```
 ### Output
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.png?raw=true)
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.png' width='800'>
+
+**Price Breakdown by Brand:**
+
+By observing the price distribution of different laptop brands, we can divide the brands into at least 4 different price tiers according to their price range and median price:
+* Tier 1   : Vero, Mediacom, Chuwi
+* Tier 1.5 : Acer, Fujitsu
+* Tier 2   : HP, Dell, Lenovo, Asus, Xiaomi
+* Tier 2.5 : Toshiba
+* Tier 3   : Huawei, Apple, Microsoft, MSI, Samsung , Google
+* Tier 3.5 : LG
+* Tier 4   : Razer
+
+```python
+print(sns.boxplot(x=df_train['Price'], y=df_train['Manufacturer'],orient='h', order=["Vero","Mediacom","Chuwi","Acer","Fujitsu","HP","Asus","Lenovo","Dell","Xiaomi","Toshiba","Huawei","Apple","Google","Microsoft","Samsung","MSI","LG","Razer"]))
+```
+
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/2.png' width='800'>
+
+**Price Breakdown by Laptop Category**
+
+The price difference is obvious between categories, it is observed that *Netbooks* are the cheapest, this is followed by *Notebook* and eventually the costliest laptops are from the *Workstation* Category. 
+
+Besides, the price distribution *Ultrabook* is fairly close to *2 in 1 Convertible* and *Gaming Laptops* are fairly close in terms of either price range or median price.
+
+```python
+print(sns.boxplot(x=df_train['Price'], y=df_train['Category'],orient='h', order=["Netbook","Notebook","2 in 1 Convertible","Ultrabook","Gaming","Workstation"]))
+```
+
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/3.png' width='800'>
+
+**Price Breakdown by Operating System Version**
+
+```python
+sns.boxplot(x=df_train['Price'], y=df_train['OS'],orient='h', order=["Android  ","Chrome OS  ","No OS  ","Linux  ","Windows 10","Mac OS X","Windows 10 S","Windows 7","macOS  "])
+```
+
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/4.png' width='800'>
+
+**Qualitative Variable EDA (Correlation)**
+
+We analyse the relationship between numerical variables and the price using a correlation heatmap. 
+
+```python
+sns.set (rc = {'figure.figsize':(12, 12)})
+sns.heatmap(df_train.corr())#, annot=True, fmt=".1f")
+```
+
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/5.png' width='800'>
+
+By focusing only on variables which are highly correlated with Price, we can deduce the following:
+
+1. **Resolution_1** and **Resolution_2** are perfectly correlated, we will only keep either one (I chose **Resolution_1**, no specific reason here but it's fine if you chose Resolution_2 either).
+2. Price is highly positively correlated with **RAM** (r=0.7), **Resolution** (r=0.6) and **SSD** (r=0.7), so we would expect to see laptops with more RAM, higher resolution and greater SSD storage space to be costlier.
+
+```python
+sns.heatmap(df_train[['Price','RAM','SSD','Category','Resolution_1','Intel_Core_i_Gen','CPU_Speed','Quadro_ver','GeForce_ver','Manufacturer_Razer','IPS Panel']].corr(), annot=True, fmt=".2f")
+```
+
+### Output
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/6.png' width='800'>
+
+# Data Transformation
+
+Distribution of Weight is observed to be positively skewed. By taking a log-transformation approach, we manage to normalize it despite having a few stubborn outliers.
+
+```python
+fig, axs = plt.subplots(2, 2, figsize=(10, 5), gridspec_kw={'height_ratios': [1, 5]})
+sns.boxplot(x=df_train['Weight'], orient='h', ax=axs[0, 0])
+axs[0, 0].set_xlabel('')
+axs[0, 0].set_title('Weight')
+sns.histplot(x=df_train['Weight'], ax=axs[1, 0])
+axs[1, 0].set_xlabel('')
+axs[1, 0].set_ylabel('')
+sns.boxplot(x=np.log(df_train['Weight']), orient='h', ax=axs[0, 1])
+axs[0, 1].set_xlabel('')
+axs[0, 1].set_title('log(Weight)')
+sns.histplot(x=np.log(df_train['Weight']), ax=axs[1, 1])
+axs[1, 1].set_xlabel('')
+axs[1, 1].set_ylabel('')
+plt.show()
+
+# Log-transforming Weight feature in both train & test set
+df_train['Weight']=np.log(df_train['Weight'])
+df_test['Weight']=np.log(df_test['Weight'])
+```
+
+### Output
+
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/7.png' width='800'>
+
+# Feature Engineering
+We will now perform **One-Hot Encoding** on the string columns 'Manufacturer' and 'OS' to assign a binary indicator column for each unique value, and keep only n-1 of those values.
+
+As for the 'Category' feature, it does not have many different values and the EDA earlier showed us that certain laptop categories are higher than each other, so we will do a **Ordinal Encoding** on Category instead.
+
+```python
+df = pd.concat([df_train,df_test])
+
+df = pd.get_dummies(df, columns = ['Manufacturer','OS'], drop_first=True)
+df['Manufacturer']=df['Manufacturer'].replace(['Apple','Huawei','Microsoft','MSI','Samsung','Google'],'3').replace(['Vero','Mediacom','Chuwi'],'1').replace(['Acer','Fujitsu'],'1.5').replace(['HP','Dell','Lenovo','Asus','Xiaomi'],'2').replace(['Toshiba'],'2.5').replace(['LG'],'3.5').replace(['Razer'],'4').astype(float)
+df['Category']=df['Category'].replace({ 'Netbook' : 1, 'Notebook' : 2, '2 in 1 Convertible' : 3, 'Ultrabook' : 3.5, 'Gaming' : 4, 'Workstation' : 5 })
+
+# Splitting back into train and test data
+df_train=df.iloc[0:len(df_train)]
+df_test=df.iloc[len(df_train):]
+df_train.head(5)
+```
+
+### Output
+
+<pre>
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align:right">
+      <th></th>
+      <th>Model Name</th>
+      <th>Category</th>
+      <th>Screen Size</th>
+      <th>Screen</th>
+      <th>CPU</th>
+      <th>RAM</th>
+      <th>Storage</th>
+      <th>GPU</th>
+      <th>Operating System</th>
+      <th>Operating System Version</th>
+      <th>...</th>
+      <th>Manufacturer_Vero</th>
+      <th>Manufacturer_Xiaomi</th>
+      <th>OS_Chrome OS</th>
+      <th>OS_Linux</th>
+      <th>OS_Mac OS X</th>
+      <th>OS_No OS</th>
+      <th>OS_Windows 10</th>
+      <th>OS_Windows 10 S</th>
+      <th>OS_Windows 7</th>
+      <th>OS_macOS</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>MacBook Pro</td>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>IPS Panel Retina Display 2560x1600</td>
+      <td>Intel Core i5 2.3GHz</td>
+      <td>8</td>
+      <td>128GB SSD</td>
+      <td>Intel Iris Plus Graphics 640</td>
+      <td>macOS</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Macbook Air</td>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>1440x900</td>
+      <td>Intel Core i5 1.8GHz</td>
+      <td>8</td>
+      <td>128GB Flash Storage</td>
+      <td>Intel HD Graphics 6000</td>
+      <td>macOS</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>250 G6</td>
+      <td>2.0</td>
+      <td>15.6</td>
+      <td>Full HD 1920x1080</td>
+      <td>Intel Core i5 7200U 2.5GHz</td>
+      <td>8</td>
+      <td>256GB SSD</td>
+      <td>Intel HD Graphics 620</td>
+      <td>No OS</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>MacBook Pro</td>
+      <td>3.5</td>
+      <td>15.4</td>
+      <td>IPS Panel Retina Display 2880x1800</td>
+      <td>Intel Core i7 2.7GHz</td>
+      <td>16</td>
+      <td>512GB SSD</td>
+      <td>AMD Radeon Pro 455</td>
+      <td>macOS</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>MacBook Pro</td>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>IPS Panel Retina Display 2560x1600</td>
+      <td>Intel Core i5 3.1GHz</td>
+      <td>8</td>
+      <td>256GB SSD</td>
+      <td>Intel Iris Plus Graphics 650</td>
+      <td>macOS</td>
+      <td>0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
+And in the last step before we train our model, we remove all non-numeric columns.
+
+```python
+# Removing string columns
+categ_col=['Model Name','Screen','CPU',' Storage','GPU','Operating System','Operating System Version']
+df_train = df_train.drop(categ_col, axis=1)
+df_test = df_test.drop(categ_col, axis=1)
+df_train.head()
+```
+
+### Output
+
+<table border="1" class="dataframe">
+  <tbody>
+    <tr style="text-align:right">
+      <th></th>
+      <th>Category</th>
+      <th>Screen Size</th>
+      <th>RAM</th>
+      <th>Weight</th>
+      <th>Price</th>
+      <th>GeForce_ver</th>
+      <th>Quadro_ver</th>
+      <th>IntelGPU_ver</th>
+      <th>Radeon_Gen</th>
+      <th>Radeon_ver</th>
+      <th>...</th>
+      <th>Manufacturer_Vero</th>
+      <th>Manufacturer_Xiaomi</th>
+      <th>OS_Chrome OS</th>
+      <th>OS_Linux</th>
+      <th>OS_Mac OS X</th>
+      <th>OS_No OS</th>
+      <th>OS_Windows 10</th>
+      <th>OS_Windows 10 S</th>
+      <th>OS_Windows 7</th>
+      <th>OS_macOS</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>8</td>
+      <td>0.314811</td>
+      <td>11912523.48</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>640.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>8</td>
+      <td>0.292670</td>
+      <td>7993374.48</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>6000.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2.0</td>
+      <td>15.6</td>
+      <td>8</td>
+      <td>0.620576</td>
+      <td>5112900.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>620.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3.5</td>
+      <td>15.4</td>
+      <td>16</td>
+      <td>0.604316</td>
+      <td>22563005.40</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>455.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3.5</td>
+      <td>13.3</td>
+      <td>8</td>
+      <td>0.314811</td>
+      <td>16037611.20</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>650.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+# Model Training
+With the dataset ready to be trained, we proceed to split the test and train data which were combined earlier for data cleansing. The algorithms will have their hyperparameters tuned using Optuna.
+
+For a training dataset with just 977 entries, we would opt for algorithms which have a higher bias to prevent overfitting. 
+
+Some of the algorithms used here are:
+* Linear Regression
+* Ridge Regression
+* Decision Tree
+* Gradient Boost
+* Random Forest
+* XGBoost
+* ElasticNet
+
+```python
+import optuna
+from sklearn.metrics import r2_score, make_scorer
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from lightgbm import LGBMRegressor
+from xgboost import XGBRegressor
+from sklearn.svm import LinearSVR
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn import utils
+
+y_train=df_train['Price']
+x_train=df_train.drop(['Price'],axis=1)
+y_test=df_test['Price']
+x_test=df_test.drop(['Price'],axis=1)
+
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+```
+
+### Baseline Algorithm - Linear Regression
+Ideally we would start off by using the simplest **Linear Regression** algorithm as it is the easiest to interpret, although it might not perform as well as other more complex algorithms.
+
+A **10-fold cross validation** will be performed on the training set before experimenting it on the test set to evaluate the model performance, hopefully the performance on the test set would not differ too much from the cross-validation performance otherwise it would be a sign of overfitting.
+
+```python
+def objective(trial):
+    model = LinearRegression()
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    r2_scorer = make_scorer(r2_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=r2_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+LR=LinearRegression(**best_params)
+LR.fit(x_train, y_train)
+y_pred = LR.predict(x_test)
+print("Linear Regression Results")
+print("R-squared: ", "%.4f" % r2_score(y_test, y_pred))
+print("Mean Absolute Error: ", "{0:,.2f}".format(mean_absolute_error(y_test, y_pred)))
+print("Root Mean Squared Error: ", "{0:,.2f}".format(np.sqrt(mean_squared_error(y_test, y_pred))))
+```
+
+### Output
+<pre>
+Linear Regression Results
+R-squared:  0.7318
+Mean Absolute Error:  2,146,615.12
+Root Mean Squared Error:  3,073,002.35
+</pre>
+
