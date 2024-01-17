@@ -90,8 +90,7 @@ Operating System           object     0 (0%)  0 (0%)
 Operating System Version   object  136 (13%)  0 (0%)
 Weight                     object     0 (0%)  0 (0%)
 Price                     float64     0 (0%)  0 (0%)
-
-<table border="1" class="dataframe">
+<table border="0" class="dataframe">
   <tbody>
     <tr style="text-align:right">
       <th></th>
@@ -344,9 +343,7 @@ Flash_Storage               int64  0 (0%)  922 (94%)
 Hybrid                      int64  0 (0%)  975 (99%)
 OS                         object  0 (0%)     0 (0%)
 Total_Storage               int64  0 (0%)     0 (0%)
-</pre>
-<pre>
-<table border="1" class="dataframe">
+<table border="0" class="dataframe">
   <tbody>
     <tr style="text-align:right">
       <th></th>
@@ -630,9 +627,7 @@ df_train.head(5)
 ```
 
 ### Output
-
-<pre>
-<table border="1" class="dataframe">
+<table border="0" class="dataframe">
   <tbody>
     <tr style="text-align:right">
       <th></th>
@@ -780,7 +775,6 @@ df_train.head(5)
     </tr>
   </tbody>
 </table>
-</pre>
 
 And in the last step before we train our model, we remove all non-numeric columns.
 
@@ -794,7 +788,7 @@ df_train.head()
 
 ### Output
 
-<table border="1" class="dataframe">
+<table border="0" class="dataframe">
   <tbody>
     <tr style="text-align:right">
       <th></th>
