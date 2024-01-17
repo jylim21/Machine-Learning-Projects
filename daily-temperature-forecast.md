@@ -418,3 +418,199 @@ plt.show()
 <img src=>
 
 For the differenced series d=1, both ACF and PACF are significant after lag 1, this seems like a better model to be fitted so **we will use this model instead**.
+
+# Model Training & Evaluation
+
+## 1. SARIMA Model
+A SARIMA model is necessary in our case due to the obvious annual seasonality. Let's build the SARIMA model using values of p,d,q determined earlier.
+
+<details>
+<summary>View Code</summary>
+
+```python
+from pmdarima.arima import auto_arima, ndiffs, nsdiffs
+sarima_model = auto_arima(df_train['meantemp'],
+                          exog=df_train.drop(['meantemp','meantemp1','meanpressure'],axis=1),
+                          start_p=1, 
+                          start_q=1,
+                          test='adf',
+                          max_p=3, 
+                          max_q=3,
+                          m=52,             
+                          d=1,          
+                          seasonal=True,
+                          start_P=3,
+                          D=1,
+                          start_Q=0,
+                          max_P=3,
+                          max_D=1,
+                          max_Q=3,
+                          trace=True,
+                          error_action='ignore',  
+                          stepwise=True
+                         )
+```
+</details>
+
+### Output
+<pre>
+Performing stepwise search to minimize aic
+ ARIMA(1,1,1)(3,1,0)[52]             : AIC=-305.460, Time=154.55 sec
+ ARIMA(0,1,0)(0,1,0)[52]             : AIC=-187.151, Time=0.69 sec
+ ARIMA(1,1,0)(1,1,0)[52]             : AIC=-242.633, Time=6.82 sec
+ ARIMA(0,1,1)(0,1,1)[52]             : AIC=inf, Time=13.10 sec
+ ARIMA(1,1,1)(2,1,0)[52]             : AIC=-300.444, Time=70.98 sec
+ ARIMA(1,1,1)(3,1,1)[52]             : AIC=inf, Time=181.42 sec
+ ARIMA(1,1,1)(2,1,1)[52]             : AIC=inf, Time=77.43 sec
+ ARIMA(0,1,1)(3,1,0)[52]             : AIC=-305.859, Time=134.67 sec
+ ARIMA(0,1,1)(2,1,0)[52]             : AIC=-300.037, Time=34.54 sec
+ ARIMA(0,1,1)(3,1,1)[52]             : AIC=inf, Time=190.69 sec
+ ARIMA(0,1,1)(2,1,1)[52]             : AIC=inf, Time=40.39 sec
+ ARIMA(0,1,0)(3,1,0)[52]             : AIC=inf, Time=39.32 sec
+ ARIMA(0,1,2)(3,1,0)[52]             : AIC=-305.406, Time=173.38 sec
+ ARIMA(1,1,0)(3,1,0)[52]             : AIC=inf, Time=142.42 sec
+ ARIMA(1,1,2)(3,1,0)[52]             : AIC=-304.011, Time=196.35 sec
+ ARIMA(0,1,1)(3,1,0)[52] intercept   : AIC=inf, Time=175.88 sec
+
+Best model:  ARIMA(0,1,1)(3,1,0)[52]          
+Total fit time: 1633.227 seconds
+</pre>
+
+```python
+sarima_model=SARIMAX(df_train['meantemp'], 
+                     order=(1,1,1), 
+                     seasonal_order=(2,1,0,52), 
+                     exog=df_train.drop(['meantemp','meantemp1'], axis=1)
+                    ) #1,1,2,2,0,0
+model=sarima_model.fit()
+print(model.summary())
+```
+
+### Output
+<pre>
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =            8     M =           10
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f= -8.93544D-01    |proj g|=  3.46494D+00
+ This problem is unconstrained.
+
+At iterate    5    f= -9.30562D-01    |proj g|=  4.89032D-01
+
+At iterate   10    f= -9.41992D-01    |proj g|=  3.91968D-01
+
+At iterate   15    f= -9.42336D-01    |proj g|=  1.90493D-01
+
+At iterate   20    f= -9.42909D-01    |proj g|=  8.95016D-02
+
+At iterate   25    f= -9.43517D-01    |proj g|=  6.76433D-02
+
+At iterate   30    f= -9.43840D-01    |proj g|=  1.00839D-01
+
+At iterate   35    f= -9.44196D-01    |proj g|=  8.48446D-02
+
+At iterate   40    f= -9.44596D-01    |proj g|=  1.73890D-01
+
+At iterate   45    f= -9.46567D-01    |proj g|=  4.31194D-01
+/opt/conda/lib/python3.10/site-packages/statsmodels/base/model.py:604: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  warnings.warn("Maximum Likelihood optimization failed to "
+
+At iterate   50    f= -9.47366D-01    |proj g|=  5.43491D-02
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+    8     50     60      1     0     0   5.435D-02  -9.474D-01
+  F = -0.94736621185899061     
+
+STOP: TOTAL NO. of ITERATIONS REACHED LIMIT                 
+                                      SARIMAX Results                                      
+===========================================================================================
+Dep. Variable:                            meantemp   No. Observations:                  209
+Model:             SARIMAX(1, 1, 1)x(2, 1, [], 52)   Log Likelihood                 198.000
+Date:                             Wed, 17 Jan 2024   AIC                           -379.999
+Time:                                     08:47:52   BIC                           -355.600
+Sample:                                          0   HQIC                          -370.089
+                                             - 209                                         
+Covariance Type:                               opg                                         
+================================================================================
+                   coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------
+humidity        -0.2951      0.032     -9.283      0.000      -0.357      -0.233
+wind_speed      -0.0236      0.021     -1.100      0.271      -0.066       0.018
+meanpressure    -0.1596      0.049     -3.253      0.001      -0.256      -0.063
+ar.L1            0.0665      0.094      0.711      0.477      -0.117       0.250
+ma.L1           -0.9388      0.035    -26.896      0.000      -1.007      -0.870
+ar.S.L52        -0.6527      0.095     -6.888      0.000      -0.838      -0.467
+ar.S.L104       -0.4368      0.123     -3.559      0.000      -0.677      -0.196
+sigma2           0.0037      0.001      7.167      0.000       0.003       0.005
+===================================================================================
+Ljung-Box (L1) (Q):                   0.15   Jarque-Bera (JB):                 4.99
+Prob(Q):                              0.70   Prob(JB):                         0.08
+Heteroskedasticity (H):               0.74   Skew:                            -0.21
+Prob(H) (two-sided):                  0.28   Kurtosis:                         3.77
+===================================================================================
+
+Warnings:
+[1] Covariance matrix calculated using the outer product of gradients (complex-step).
+</pre>
+
+After thorough trial-and-error, this **SARIMA(0,1,1),(3,1,0,52)** model works best with an AIC of -380. 
+
+We should check on the residuals too:
+
+<details>
+<summary>View Code</summary>
+
+```python
+residuals = pd.DataFrame(model.resid)
+fig, ax = plt.subplots(1,2,figsize=(10, 4))
+residuals.plot(title="Residuals", ax=ax[0])
+residuals.plot(kind='kde', title='Density', ax=ax[1])
+plt.show()
+```
+</details>
+
+### Output
+
+<img src=>
+
+The residuals are normally distributed, another tick on our checklist!
+
+Let's visualize the whole model and our training data:
+
+```python
+train=model.predict()
+plt.figure(figsize=(12, 6))
+plt.plot(df_train['meantemp'], label='Actual')
+plt.plot(train, color='r', label='SARIMA')
+plt.legend()
+plt.title('SARIMA(1,1,1)(2,1,0,52) Model Predictions vs. Actual meantemp')
+plt.xlabel('Date')
+plt.ylabel('meantemp')
+plt.show()
+```
+
+### Output
+
+<img src=>
+
+This looks like a fairly good fit, but we are more interested in it's prediction accuracy on unseen data. Let's bring out our test data and put this model to the ultimate test! (no pun intended)
+
+## Forecasting using SARIMA
+We will now evaluate our model based on the unseen test data, but first the test data has to be converted from Days to Weeks too.
