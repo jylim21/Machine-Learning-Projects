@@ -272,3 +272,149 @@ Let's look at the different components of *meantemp*.
 * Residuals - Looks random which is good.
 
 This does not seem to be a stationary series, let's check using **AD Fuller** and **KPSS tests**.
+
+## AD Fuller and KPSS tests on stationarity
+Keep in mind that in order to prove that our series is stationary, we have to
+* **Reject** null hypothesis in **AD Fuller** test
+* **Accept** null hypothesis in **KPSS** Test
+
+<details>
+<summary>View Code</summary>
+
+```python
+adtest=adfuller(df_train['meantemp'][:])
+print('ADF Statistic: %f' % adtest[0])
+print('p-value: %f' % adtest[1])
+print('Critical Values:')
+for key, value in adtest[4].items():
+ print('\t%s: %.3f' % (key, value))
+print("Since p-value < 0.05, we reject the null hypothesis, therefore the series is STATIONARY. \n" if adtest[1] < 0.05 else "Since p-value > 0.05, we fail to reject the null hypothesis, the series is NOT STATIONARY. \n")
+
+kptest=kpss(df_train['meantemp'][:])
+print('KPSS Statistic: %f' % kptest[0])
+print('p-value: %f' % kptest[1])
+print('Critical Values:')
+for key, value in kptest[3].items():
+ print('\t%s: %.3f' % (key, value))
+print("Since p-value < 0.05, we reject the null hypothesis and the series is NOT STATIONARY. \n" if kptest[1] < 0.05 else "Since p-value > 0.05, we fail to reject the null hypothesis, therefore the series is STATIONARY. \n")
+```
+</details>
+
+### Output
+<pre>
+ADF Statistic: -4.428957
+p-value: 0.000264
+Critical Values:
+	1%: -3.463
+	5%: -2.876
+	10%: -2.574
+Since p-value < 0.05, we reject the null hypothesis, therefore the series is STATIONARY. 
+
+KPSS Statistic: 0.076783
+p-value: 0.100000
+Critical Values:
+	10%: 0.347
+	5%: 0.463
+	2.5%: 0.574
+	1%: 0.739
+Since p-value > 0.05, we fail to reject the null hypothesis, therefore the series is STATIONARY. 
+</pre>
+
+Contrary to our belief, it passed both stationarity tests even without differencing. So we may proceed to the next step with out stationary series.
+
+## ACF and PACF visualization
+It's time to tackle the MA and AR components *p* & *q* with the help of our ACF and PACF plots.
+
+```python
+fig, ax = plt.subplots(1,2,figsize=(10,5))
+acf(df_train['meantemp'][:], ax=ax[0])
+pacf(df_train['meantemp'][:], ax=ax[1])
+plt.show()
+```
+### Output
+
+<img src=>
+
+Based on the ACF and PACF plots
+* m=52 since it has an annual cycle equivalent to 52 weeks
+* ACF : Significant at lag 7 or 8 (*q*=7) 
+* PACF: Significant at lag 2 (*p*=2)
+
+However the ACF plot flats out too slowly, this suggests that differencing is still required, therefore let's try out on the differenced series too:
+
+# BONUS: Differencing of series
+Although the original series is already stationary, we will see if the 1st order of differencing makes it better.
+
+```python
+df_train['meantemp1']=df_train['meantemp'].diff(periods=1)
+dec=seasonal_decompose(df_train['meantemp1'][1:], model='additive')
+fig = dec.plot()
+fig.set_size_inches((16, 8))
+fig.tight_layout()
+plt.show()
+```
+
+### Output
+
+<img src=>
+
+Now there is definitely no trend, no further differencing required.
+
+We run both stationarity tests again on the differenced series, just to be sure:
+
+<details>
+<summary>View Code</summary>
+
+```python
+adtest=adfuller(df_train['meantemp1'][1:])
+print('ADF Statistic: %f' % adtest[0])
+print('p-value: %f' % adtest[1])
+print('Critical Values:')
+for key, value in adtest[4].items():
+  print('\t%s: %.3f' % (key, value))
+print("Since p-value < 0.05, we reject the null hypothesis, therefore the series is STATIONARY. \n" if adtest[1] < 0.05 else "Since p-value > 0.05, we fail to reject the null hypothesis, the series is NOT STATIONARY \n")
+
+kptest=kpss(df_train['meantemp1'][1:])
+print('KPSS Statistic: %f' % kptest[0])
+print('p-value: %f' % kptest[1])
+print('Critical Values:')
+for key, value in kptest[3].items():
+  print('\t%s: %.3f' % (key, value))
+print("Since p-value < 0.05, we reject the null hypothesis and the series is NOT STATIONARY \n" if kptest[1] < 0.05 else "Since p-value > 0.05, we fail to reject the null hypothesis, therefore the series is STATIONARY. \n")
+```
+</details>
+
+### Output
+
+<pre>
+ADF Statistic: -3.366485
+p-value: 0.012156
+Critical Values:
+	1%: -3.463
+	5%: -2.876
+	10%: -2.574
+Since p-value < 0.05, we reject the null hypothesis, therefore the series is STATIONARY. 
+
+KPSS Statistic: 0.246443
+p-value: 0.100000
+Critical Values:
+	10%: 0.347
+	5%: 0.463
+	2.5%: 0.574
+	1%: 0.739
+Since p-value > 0.05, we fail to reject the null hypothesis, therefore the series is STATIONARY.
+</pre>
+
+### ACF and PACF of Differenced Series (d=1)
+
+```python
+fig, ax = plt.subplots(1,2,figsize=(10,5))
+acf(df_train['meantemp1'][1:], ax=ax[0])
+pacf(df_train['meantemp1'][1:], ax=ax[1])
+plt.show()
+```
+### Output
+
+<img src=>
+
+For the differenced series d=1, both ACF and PACF are significant after lag 1, this seems like a better model to be fitted so **we will use this model instead**.
