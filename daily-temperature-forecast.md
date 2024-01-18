@@ -85,9 +85,7 @@ meantemp      float64  0 (0%)   0 (0%)
 humidity      float64  0 (0%)   0 (0%)
 wind_speed    float64  0 (0%)  26 (1%)
 meanpressure  float64  0 (0%)   0 (0%)
-    
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"> <tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>date</th>
@@ -136,9 +134,7 @@ meanpressure  float64  0 (0%)   0 (0%)
       <td>3.700000</td>
       <td>1016.500000</td>
     </tr>
-  </tbody>
-</table>
-</pre>
+  </tbody></table></pre>
 
 Everything looks fine, except for wind_speed which, although it is reasonable to have no wind at all, we should probably assign a value to improve our model performance later. Notice that the date is having an 'object' data type which should be converted too.
 
@@ -166,7 +162,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/1.png?raw=true)
 
 ### Bivariate Analysis
 This is a good way to observe if there are any interaction between meantemp and other features. 
@@ -185,6 +181,10 @@ sns.scatterplot(x=(df_train['wind_speed']), y=df_train['meantemp'], ax=axs[2]).s
 plt.show()
 ```
 </details>
+
+### Output
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/2.png?raw=true)
 
 # Data Cleansing
 From what we saw on *wind_speed* and *meanpressure*, it's time to cleanse these features.
@@ -215,7 +215,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/3.png?raw=true)
 
 ### meanpressure
 * Outliers in both extreme ends will be capped to the 1st and 99th percentile.
@@ -235,7 +235,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/4.png?raw=true)
 
 The treated features should give us a clearer presentation of their distribution and pairwise relationship, let's see if this is true:
 
@@ -245,10 +245,13 @@ pair_plot(df_train)
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/5.png?raw=true)
 
 
 ## Time Series decomposition of Temperature
+
+<details>
+<summary>View Code</summary>
 
 ```python
 df_train['date'] = pd.to_datetime(df_train['date'])
@@ -261,10 +264,11 @@ fig.set_size_inches((16, 8))
 fig.tight_layout()
 plt.show()
 ```
+</details>
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/6.png?raw=true)
 
 Let's look at the different components of *meantemp*.
 * Trend - There seems to be an upward trend, global warming is real!
@@ -333,7 +337,7 @@ plt.show()
 ```
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/7.png?raw=true)
 
 Based on the ACF and PACF plots
 * m=52 since it has an annual cycle equivalent to 52 weeks
@@ -356,7 +360,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/8.png?raw=true)
 
 Now there is definitely no trend, no further differencing required.
 
@@ -415,7 +419,7 @@ plt.show()
 ```
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/9.png?raw=true)
 
 For the differenced series d=1, both ACF and PACF are significant after lag 1, this seems like a better model to be fitted so **we will use this model instead**.
 
@@ -517,8 +521,6 @@ At iterate   35    f= -9.44196D-01    |proj g|=  8.48446D-02
 At iterate   40    f= -9.44596D-01    |proj g|=  1.73890D-01
 
 At iterate   45    f= -9.46567D-01    |proj g|=  4.31194D-01
-/opt/conda/lib/python3.10/site-packages/statsmodels/base/model.py:604: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
-  warnings.warn("Maximum Likelihood optimization failed to "
 
 At iterate   50    f= -9.47366D-01    |proj g|=  5.43491D-02
 
@@ -588,7 +590,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/10.png?raw=true)
 
 The residuals are normally distributed, another tick on our checklist!
 
@@ -608,7 +610,7 @@ plt.show()
 
 ### Output
 
-<img src=>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/11.png?raw=true)
 
 This looks like a fairly good fit, but we are more interested in it's prediction accuracy on unseen data. Let's bring out our test data and put this model to the ultimate test! (no pun intended)
 
