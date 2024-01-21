@@ -324,9 +324,9 @@ print(str(df['name'].value_counts())
 +"\n\n"+str(df['icon'].value_counts())
 +"\n\n"+str(df['stations'].value_counts()))
 ```
-</details>
 
 ### Output
+</details>
 <pre>
 name
 kuala lumpur             1838
@@ -413,9 +413,10 @@ warnings.resetwarnings()
 df.drop(['description','stations'], axis=1, inplace=True)
 df.head()
 ```
-</details>
+
 
 ### Output
+</details>
 <pre><table border="0" class="dataframe">  <tbody>
     <tr style="text-align: right;">
       <th></th>
@@ -648,10 +649,9 @@ df['precipitation'] = df['precip']
 df = df.iloc[1:,20:].drop(['rain_dawn','rain_morning','rain_afternoon','rain_evening'], axis=1)
 df.head()
 ```
-</details>
 
 ### Output
-
+</details>
 <pre>
 <table border="0" class="dataframe">  <tbody>
     <tr style="text-align: right;">
@@ -904,10 +904,9 @@ sns.lineplot(x=df['2023-01-01':'2023-12-31'].index, y=df['2023-01-01':'2023-12-3
 plt.legend(loc='lower right')
 plt.show()
 ```
-</details>
 
 ### Output
-
+</details>
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/1.jpg?raw=true)
 
 ## Comparison between actual and felt temperature
@@ -939,11 +938,10 @@ sns.lineplot(x=df['2023-01-01':'2023-12-31'].index, y=df['2023-01-01':'2023-12-3
 axs[2].set(ylabel='Min Temperature', xlabel='Date')
 plt.show()
 ```
-</details>
 
 ### Output
-
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/2.jpg?raw=true)
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/2.png?raw=true)
 
 ## Distribution of Rainfall through the year
 
@@ -961,11 +959,10 @@ plt.legend(loc='upper left', bbox_to_anchor=(1,1))
 plt.title('Monthly Rainfall by Year')
 plt.show()
 ```
-</details>
 
 ### Output
-
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/3.jpg?raw=true)
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/3.png?raw=true)
 
 ## Univariate Analysis
 By looking at the distribution of individual features, we would be able to identify if there is any skewness or outliers present.
@@ -978,11 +975,10 @@ fig, axes = plt.subplots(nrows=6, ncols=4, figsize=(12,20))
 for i, column in enumerate(df.drop(['Rainfall','sunset (lag_1)','sunrise (lag_1)','Year','Month','Day'], axis=1).columns):
     sns.histplot(df[column],ax=axes[i//4,i%4])
 ```
-</details>
 
 ### Output
-
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/4.jpg?raw=true)
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/4.png?raw=true)
 
 ## Bivariate Analysis
 ### Scatterplots
@@ -998,11 +994,10 @@ fig, axes = plt.subplots(nrows=7, ncols=4, figsize=(12,25))
 for i, column in enumerate(df.drop(['Rainfall','sunrise (lag_1)','sunset (lag_1)'], axis=1).columns):
     sns.scatterplot(x=df[column], y=df['precipitation'],ax=axes[i//4,i%4])
 ```
-</details>
 
 ### Output
-
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/5.jpg?raw=true)
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/5.png?raw=true)
 
 ### Correlation Analysis
 
@@ -1018,27 +1013,26 @@ plt.figure(figsize=(10, 10))
 sns.heatmap(df.drop(['sunrise (lag_1)','sunset (lag_1)'],axis=1).corr(), annot=True, cmap='coolwarm', fmt=".1f", linewidths=0.5)
 plt.show()
 ```
-</details>
 
 ### Output
-
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/6.jpg?raw=true)
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/6.png?raw=true)
 
 ```python
-df.drop(['solarenergy (lag_1)','uvindex (lag_1)','tempmin (lag_1)','tempmax (lag_1)','feelslikemin (lag_1)','feelslikemax (lag_1)','feelslike (lag_1)','sunrise (lag_1)','sunset (lag_1)'], axis=1, inplace=True)
+df.drop(['solarenergy (lag_1)','uvindex (lag_1)','tempmin (lag_1)','temp (lag_1)','tempmax (lag_1)','feelslikemin (lag_1)','feelslikemax (lag_1)','feelslike (lag_1)','sunrise (lag_1)','sunset (lag_1)'], axis=1, inplace=True)
 df['monsoon_month']=df['Month'].isin([3,4, 11, 12]).astype(int)
 df.head()
 ```
 
 ### Output
 
-<pre><table border="0" class="dataframe">  <thead>
+<pre><table border="0" class="dataframe">
+  <thead>
     <tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
       <th>Day</th>
-      <th>temp (lag_1)</th>
       <th>dew (lag_1)</th>
       <th>humidity (lag_1)</th>
       <th>precip (lag_1)</th>
@@ -1054,122 +1048,146 @@ df.head()
       <th>rain_afternoon (lag_1)</th>
       <th>rain_evening (lag_1)</th>
       <th>Rainfall</th>
+      <th>precipitation</th>
       <th>monsoon_month</th>
     </tr>
     <tr>
-      <th>0</th>
-      <td>-1.715328</td>
-      <td>0.084349</td>
-      <td>-1.556279</td>
-      <td>2.359333</td>
-      <td>1.392524</td>
-      <td>-1.055009</td>
-      <td>-0.507821</td>
-      <td>0.176296</td>
-      <td>-0.874654</td>
-      <td>-0.466788</td>
-      <td>1.793184</td>
-      <td>-0.236464</td>
-      <td>-0.431123</td>
-      <td>1.370751</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
+      <th>datetime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
     </tr>
     <tr>
-      <th>1</th>
-      <td>-1.715328</td>
-      <td>0.084349</td>
-      <td>-1.442754</td>
-      <td>2.083717</td>
-      <td>0.676533</td>
-      <td>-1.302055</td>
-      <td>-0.507821</td>
-      <td>-0.264253</td>
-      <td>-0.954538</td>
-      <td>0.071975</td>
-      <td>1.793184</td>
-      <td>-0.128279</td>
-      <td>-0.086516</td>
-      <td>1.509314</td>
+      <th>2016-07-02</th>
+      <td>2016</td>
+      <td>7</td>
+      <td>2</td>
+      <td>25.0</td>
+      <td>73.3</td>
+      <td>0.0</td>
+      <td>16.4</td>
+      <td>154.6</td>
+      <td>1009.1</td>
+      <td>89.0</td>
+      <td>9.0</td>
+      <td>174.0</td>
+      <td>0.88</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
-      <td>0.0</td>
+      <td>0.000</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>2</th>
-      <td>-1.715328</td>
-      <td>0.084349</td>
-      <td>-1.329229</td>
-      <td>2.451205</td>
-      <td>0.079873</td>
-      <td>-1.902023</td>
-      <td>-0.507821</td>
-      <td>-0.016444</td>
-      <td>-0.910423</td>
-      <td>0.148941</td>
-      <td>1.735004</td>
-      <td>0.629022</td>
-      <td>-0.031165</td>
-      <td>1.613237</td>
+      <th>2016-07-03</th>
+      <td>2016</td>
+      <td>7</td>
+      <td>3</td>
+      <td>24.4</td>
+      <td>71.9</td>
+      <td>0.0</td>
+      <td>14.8</td>
+      <td>147.9</td>
+      <td>1009.8</td>
+      <td>89.0</td>
+      <td>9.1</td>
+      <td>193.3</td>
+      <td>0.92</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
-      <td>0.0</td>
+      <td>0.000</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>3</th>
-      <td>-1.715328</td>
-      <td>0.084349</td>
-      <td>-1.215703</td>
-      <td>2.175589</td>
-      <td>1.034528</td>
-      <td>-1.213824</td>
-      <td>-0.507821</td>
-      <td>-0.897542</td>
-      <td>-0.476430</td>
-      <td>-0.466788</td>
-      <td>1.793184</td>
-      <td>-0.128279</td>
-      <td>0.411646</td>
-      <td>-1.677650</td>
+      <th>2016-07-04</th>
+      <td>2016</td>
+      <td>7</td>
+      <td>4</td>
+      <td>23.9</td>
+      <td>68.5</td>
+      <td>0.0</td>
+      <td>15.7</td>
+      <td>151.6</td>
+      <td>1009.9</td>
+      <td>87.9</td>
+      <td>9.8</td>
+      <td>196.4</td>
+      <td>0.95</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
-      <td>0.0</td>
+      <td>0.000</td>
+      <td>0</td>
     </tr>
     <tr>
-      <th>4</th>
-      <td>-1.715328</td>
-      <td>0.084349</td>
-      <td>-1.102178</td>
-      <td>1.808100</td>
-      <td>1.750520</td>
-      <td>-0.472686</td>
-      <td>-0.507821</td>
-      <td>0.726982</td>
-      <td>-0.546775</td>
-      <td>-1.005550</td>
-      <td>1.793184</td>
-      <td>-0.885579</td>
-      <td>-1.052487</td>
-      <td>-1.608368</td>
+      <th>2016-07-05</th>
+      <td>2016</td>
+      <td>7</td>
+      <td>5</td>
+      <td>24.7</td>
+      <td>72.4</td>
+      <td>0.0</td>
+      <td>12.5</td>
+      <td>188.0</td>
+      <td>1009.1</td>
+      <td>89.0</td>
+      <td>9.1</td>
+      <td>221.2</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2016-07-06</th>
+      <td>2016</td>
+      <td>7</td>
+      <td>6</td>
+      <td>25.3</td>
+      <td>76.6</td>
+      <td>0.0</td>
+      <td>18.4</td>
+      <td>182.1</td>
+      <td>1008.4</td>
+      <td>89.0</td>
+      <td>8.4</td>
+      <td>139.2</td>
+      <td>0.02</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>1.0</td>
-      <td>0.0</td>
+      <td>15.913</td>
+      <td>0</td>
     </tr>
   </tbody>
 </table>
@@ -1177,21 +1195,22 @@ df.head()
 
 ### Outlier & Missing Value Treatment
 
+<details>
+<summary>View Code</summary>
+
 ```python
-df['temp (lag_1)']=np.clip(df['temp (lag_1)'], a_max=None, a_min=df['temp (lag_1)'].quantile(0.005))
 df['visibility (lag_1)']=np.clip(df['visibility (lag_1)'], a_max=None, a_min=df['visibility (lag_1)'].quantile(0.005))
 df['sealevelpressure (lag_1)']=df['sealevelpressure (lag_1)'].fillna(np.mean(df['sealevelpressure (lag_1)']))
 summary(df)
 ```
 
 ### Output
-
+</details>
 <pre>
                              Type     NaN       Zeros
 Year                        int32  0 (0%)      0 (0%)
 Month                       int32  0 (0%)      0 (0%)
 Day                         int32  0 (0%)      0 (0%)
-temp (lag_1)              float64  0 (0%)      0 (0%)
 dew (lag_1)               float64  0 (0%)      0 (0%)
 humidity (lag_1)          float64  0 (0%)      0 (0%)
 precip (lag_1)            float64  0 (0%)   903 (32%)
@@ -1214,6 +1233,9 @@ monsoon_month               int64  0 (0%)  1831 (66%)
 # Feature Scaling
 by scaling each feature to the range (0,1) using SKlearn's MinMaxSaler, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
 
+<details>
+<summary>View Code</summary>
+
 ```python
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
@@ -1225,15 +1247,14 @@ df.head()
 ```
 
 ### Output
-
+</details>
 <pre>
-<table border="0" class="dataframe">  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
       <th>Day</th>
-      <th>temp (lag_1)</th>
       <th>dew (lag_1)</th>
       <th>humidity (lag_1)</th>
       <th>precip (lag_1)</th>
@@ -1256,7 +1277,6 @@ df.head()
       <td>0.0</td>
       <td>0.545455</td>
       <td>0.033333</td>
-      <td>0.916037</td>
       <td>0.698630</td>
       <td>0.350725</td>
       <td>0.0</td>
@@ -1279,7 +1299,6 @@ df.head()
       <td>0.0</td>
       <td>0.545455</td>
       <td>0.066667</td>
-      <td>0.865659</td>
       <td>0.616438</td>
       <td>0.310145</td>
       <td>0.0</td>
@@ -1302,7 +1321,6 @@ df.head()
       <td>0.0</td>
       <td>0.545455</td>
       <td>0.100000</td>
-      <td>0.932830</td>
       <td>0.547945</td>
       <td>0.211594</td>
       <td>0.0</td>
@@ -1325,7 +1343,6 @@ df.head()
       <td>0.0</td>
       <td>0.545455</td>
       <td>0.133333</td>
-      <td>0.882452</td>
       <td>0.657534</td>
       <td>0.324638</td>
       <td>0.0</td>
@@ -1348,7 +1365,6 @@ df.head()
       <td>0.0</td>
       <td>0.545455</td>
       <td>0.166667</td>
-      <td>0.815281</td>
       <td>0.739726</td>
       <td>0.446377</td>
       <td>0.0</td>
@@ -1371,6 +1387,27 @@ df.head()
 </pre>
 
 # Model Building
+For a binary classification problem like this, the **Logistic Regression** model would be the baseline model due to it's simple yet highly interpretable nature. 
+
+As for the split, we opt for a 70% train, 20% validation and 10% test split, where the train data is cross-validated on 8 folds with the validation data before evaluating it using the test data.
+
+Also, for any classification problems, we should always check if there is any serious imbalance in the outcomes, otherwise the model might not learn well the parameters for each outcome.
+
+```python
+df['Rainfall'].value_counts()
+```
+
+### Output
+<pre>
+Rainfall
+1.0    1844
+0.0     902
+Name: count, dtype: int64
+</pre>
+
+The ratio of 1 to 0 here is approximately 2:1, obviously this data is imbalanced. In the upcoming part, we will utilize SMOTE to perform downsampling and upsampling on the outcomes respectively so the model will learn both outcomes equally well.
+
+Let's import the Machine Learning libraries conveniently provided by SKlearn:
 
 ```python
 from sklearn.linear_model import LogisticRegression
@@ -1379,7 +1416,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score, roc_auc_score, make_scorer, roc_curve#, rac_scorer
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score, roc_auc_score, make_scorer, roc_curve, rac_scorer
 import optuna
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold, cross_val_score
@@ -1387,6 +1424,9 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 ```
 
 ### Baseline Model - Logistic Regression
+
+<details>
+<summary>View Code</summary>
 
 ```python
 X=df.drop('Rainfall', axis=1)
@@ -1413,7 +1453,7 @@ confusion_matrix(y_val, y_pred)
 ```
 
 ### Output
-
+</details>
 <pre>
 Accuracy:  0.6667
 Precision:  0.7367
@@ -1422,3 +1462,24 @@ F1-Score:  0.7598
 array([[ 77, 104],
        [ 80, 291]])
 </pre>
+
+Although the accuracy isn't really satisfactory, however the advantage of using this algorithm is we are able to find out which features play a more important role in predicting the final outcome.
+
+By plotting the feature importances:
+
+<details>
+<summary>View Code</summary>
+
+```python
+coeff=pd.DataFrame(zip(x_train.columns, np.transpose(LR.coef_.flatten())), columns=['features', 'coef']).sort_values(by='coef')
+plt.barh(coeff['features'], coeff['coef'], color='skyblue')
+plt.xlabel('Coefficient Value')
+plt.ylabel('Feature')
+plt.title('Logistic Regression Feature Importances')
+plt.grid(axis='x', linestyle='--', alpha=0.5)
+plt.show()
+```
+
+### Output
+</details>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/7.png?raw=true)
