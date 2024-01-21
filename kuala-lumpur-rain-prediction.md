@@ -941,6 +941,7 @@ plt.show()
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/2.png?raw=true)
 
 ## Distribution of Rainfall through the year
@@ -962,6 +963,7 @@ plt.show()
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/3.png?raw=true)
 
 ## Univariate Analysis
@@ -978,6 +980,7 @@ for i, column in enumerate(df.drop(['Rainfall','sunset (lag_1)','sunrise (lag_1)
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/4.png?raw=true)
 
 ## Bivariate Analysis
@@ -997,6 +1000,7 @@ for i, column in enumerate(df.drop(['Rainfall','sunrise (lag_1)','sunset (lag_1)
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/5.png?raw=true)
 
 ### Correlation Analysis
@@ -1016,6 +1020,7 @@ plt.show()
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/6.png?raw=true)
 
 ```python
@@ -1482,4 +1487,5 @@ plt.show()
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/7.png?raw=true)
