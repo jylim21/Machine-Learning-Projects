@@ -884,7 +884,7 @@ df.head()
 
 # EDA
 ## Actual daily temperature
-As a city located strategically near the equator, the weather in Kuala Lumpur is relatively stable with mean temperatures around 28±1.0°C throughout the year, although it is slightly hotter ffrom April to June.
+As a city located strategically near the equator, the weather in Kuala Lumpur is relatively stable with mean temperatures around 28±1.0°C throughout the year, although it is slightly hotter from April to June.
 
 <details>
 <summary>View Code</summary>
@@ -1173,4 +1173,252 @@ df.head()
     </tr>
   </tbody>
 </table>
+</pre>
+
+### Outlier & Missing Value Treatment
+
+```python
+df['temp (lag_1)']=np.clip(df['temp (lag_1)'], a_max=None, a_min=df['temp (lag_1)'].quantile(0.005))
+df['visibility (lag_1)']=np.clip(df['visibility (lag_1)'], a_max=None, a_min=df['visibility (lag_1)'].quantile(0.005))
+df['sealevelpressure (lag_1)']=df['sealevelpressure (lag_1)'].fillna(np.mean(df['sealevelpressure (lag_1)']))
+summary(df)
+```
+
+### Output
+
+<pre>
+                             Type     NaN       Zeros
+Year                        int32  0 (0%)      0 (0%)
+Month                       int32  0 (0%)      0 (0%)
+Day                         int32  0 (0%)      0 (0%)
+temp (lag_1)              float64  0 (0%)      0 (0%)
+dew (lag_1)               float64  0 (0%)      0 (0%)
+humidity (lag_1)          float64  0 (0%)      0 (0%)
+precip (lag_1)            float64  0 (0%)   903 (32%)
+windspeed (lag_1)         float64  0 (0%)      0 (0%)
+winddir (lag_1)           float64  0 (0%)      0 (0%)
+sealevelpressure (lag_1)  float64  0 (0%)      0 (0%)
+cloudcover (lag_1)        float64  0 (0%)      0 (0%)
+visibility (lag_1)        float64  0 (0%)      0 (0%)
+solarradiation (lag_1)    float64  0 (0%)      0 (0%)
+moonphase (lag_1)         float64  0 (0%)     93 (3%)
+rain_dawn (lag_1)         float64  0 (0%)  1850 (67%)
+rain_morning (lag_1)      float64  0 (0%)  1805 (65%)
+rain_afternoon (lag_1)    float64  0 (0%)  1821 (66%)
+rain_evening (lag_1)      float64  0 (0%)  1611 (58%)
+Rainfall                  float64  0 (0%)   902 (32%)
+precipitation             float64  0 (0%)   902 (32%)
+monsoon_month               int64  0 (0%)  1831 (66%)
+</pre>
+
+# Feature Scaling
+by scaling each feature to the range (0,1) using SKlearn's MinMaxSaler, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
+
+```python
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+df_bin=df.iloc[:,-7:]
+df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+df.iloc[:,-7:]=df_bin
+df.drop('precipitation', axis=1, inplace=True)
+df.head()
+```
+
+### Output
+
+<pre>
+<table border="0" class="dataframe">  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+      <th>temp (lag_1)</th>
+      <th>dew (lag_1)</th>
+      <th>humidity (lag_1)</th>
+      <th>precip (lag_1)</th>
+      <th>windspeed (lag_1)</th>
+      <th>winddir (lag_1)</th>
+      <th>sealevelpressure (lag_1)</th>
+      <th>cloudcover (lag_1)</th>
+      <th>visibility (lag_1)</th>
+      <th>solarradiation (lag_1)</th>
+      <th>moonphase (lag_1)</th>
+      <th>rain_dawn (lag_1)</th>
+      <th>rain_morning (lag_1)</th>
+      <th>rain_afternoon (lag_1)</th>
+      <th>rain_evening (lag_1)</th>
+      <th>Rainfall</th>
+      <th>monsoon_month</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>0.0</td>
+      <td>0.545455</td>
+      <td>0.033333</td>
+      <td>0.916037</td>
+      <td>0.698630</td>
+      <td>0.350725</td>
+      <td>0.0</td>
+      <td>0.337423</td>
+      <td>0.428651</td>
+      <td>0.360465</td>
+      <td>0.914616</td>
+      <td>0.690909</td>
+      <td>0.512873</td>
+      <td>0.897959</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.0</td>
+      <td>0.545455</td>
+      <td>0.066667</td>
+      <td>0.865659</td>
+      <td>0.616438</td>
+      <td>0.310145</td>
+      <td>0.0</td>
+      <td>0.288344</td>
+      <td>0.409978</td>
+      <td>0.441860</td>
+      <td>0.914616</td>
+      <td>0.709091</td>
+      <td>0.578252</td>
+      <td>0.938776</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.0</td>
+      <td>0.545455</td>
+      <td>0.100000</td>
+      <td>0.932830</td>
+      <td>0.547945</td>
+      <td>0.211594</td>
+      <td>0.0</td>
+      <td>0.315951</td>
+      <td>0.420290</td>
+      <td>0.453488</td>
+      <td>0.898698</td>
+      <td>0.836364</td>
+      <td>0.588753</td>
+      <td>0.969388</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.545455</td>
+      <td>0.133333</td>
+      <td>0.882452</td>
+      <td>0.657534</td>
+      <td>0.324638</td>
+      <td>0.0</td>
+      <td>0.217791</td>
+      <td>0.521739</td>
+      <td>0.360465</td>
+      <td>0.914616</td>
+      <td>0.709091</td>
+      <td>0.672764</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0</td>
+      <td>0.545455</td>
+      <td>0.166667</td>
+      <td>0.815281</td>
+      <td>0.739726</td>
+      <td>0.446377</td>
+      <td>0.0</td>
+      <td>0.398773</td>
+      <td>0.505295</td>
+      <td>0.279070</td>
+      <td>0.914616</td>
+      <td>0.581818</td>
+      <td>0.394986</td>
+      <td>0.020408</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
+# Model Building
+
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score, roc_auc_score, make_scorer, roc_curve#, rac_scorer
+import optuna
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, cross_val_score
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+```
+
+### Baseline Model - Logistic Regression
+
+```python
+X=df.drop('Rainfall', axis=1)
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.30, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.33, random_state=42)
+
+over = SMOTE(sampling_strategy=0.6, random_state=42)
+under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+LR=LogisticRegression(random_state=42)
+LR.fit(x_train, y_train)
+y_pred = LR.predict(x_val)
+y_pred_proba = LR.predict_proba(x_val)[::,1]
+LR_fp, LR_tp, _ = roc_curve(y_val,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+
+<pre>
+Accuracy:  0.6667
+Precision:  0.7367
+Recall:  0.7844
+F1-Score:  0.7598
+array([[ 77, 104],
+       [ 80, 291]])
 </pre>
