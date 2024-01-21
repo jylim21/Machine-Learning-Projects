@@ -2,6 +2,12 @@
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/kl-rain.jpg?raw=true)
 
+Kuala Lumpur has a tropical rainforest climate with abundant rainfall throughout the year. On average it receives around 2,400 mm of rain annually, with elevated precipitation during monsoon seasons. 
+
+Flash floods frequently disrupt traffic and public transport during torrential downpours. Meanwhile, long dry spells threaten water supply and can hamper agriculture. Reliable rainfall forecasting can help this city prepare for these events through improved stormwater management and water resource planning. Furthermore, sectors like tourism, construction and renewable energy can optimize operations using accurate precipitation predictions.
+
+This project aims to build a machine learning model to forecast rainfall levels in Kuala Lumpur based on historical meteorological data. The precipitation outlook generated can aid urban planning and climate resilience. Government agencies can leverage the forecasts to develop flood mitigation infrastructure and ensure continuous water supply during hot seasons. Businesses can also adjust plans based on wet and dry period forecasts. Overall, enhanced rainfall prediction stands to provide economic and societal benefits for Malaysia's vibrant capital.
+
 ## THE PROJECT
 
 The dataset used here can be downloaded from [visualcrossing.com](https://www.visualcrossing.com), the free version allows users to export daily data on temperature, humidity, wind, solar, and precipitation etc. for different location with a daily limit of 1000 rows. Since this dataset contains data from July 2016 to Dec 2023, it took me 3 days to get the data required.
