@@ -1019,6 +1019,7 @@ plt.show()
 
 ### Output
 </details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/1.jpg?raw=true)
 
 ## Comparison between actual and felt temperature
@@ -1634,7 +1635,7 @@ from sklearn.model_selection import KFold, cross_val_score
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 ```
 
-### Baseline Model - Logistic Regression
+## Baseline Model - Logistic Regression
 
 <details>
 <summary>View Code</summary>
@@ -1643,13 +1644,13 @@ optuna.logging.set_verbosity(optuna.logging.WARNING)
 X=df.drop('Rainfall', axis=1)
 y=df['Rainfall']
 
-x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.30, random_state=42)
-x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.33, random_state=42)
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.3, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
 
-over = SMOTE(sampling_strategy=0.6, random_state=42)
-under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
-smt = Pipeline(steps=[('o', over), ('u', under)])
-x_train, y_train=smt.fit_resample(x_train, y_train)
+# over = SMOTE(sampling_strategy=0.6, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
 
 LR=LogisticRegression(random_state=42)
 LR.fit(x_train, y_train)
@@ -1666,15 +1667,15 @@ confusion_matrix(y_val, y_pred)
 ### Output
 </details>
 <pre>
-Accuracy:  0.6667
-Precision:  0.7367
-Recall:  0.7844
-F1-Score:  0.7598
-array([[ 77, 104],
-       [ 80, 291]])
+Accuracy:  0.7233
+Precision:  0.7530
+Recall:  0.8908
+F1-Score:  0.8161
+array([[ 45,  83],
+       [ 31, 253]])
 </pre>
 
-Although the accuracy isn't really satisfactory, however the advantage of using this algorithm is we are able to find out which features play a more important role in predicting the final outcome.
+Although the accuracy isn't really excellent for this algorithm, the advantage of using this algorithm is we are able to find out which features play a more important role in predicting the final outcome.
 
 By plotting the feature importances:
 
@@ -1695,3 +1696,502 @@ plt.show()
 </details>
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/7.png?raw=true)
+
+Some of the important previous day variables are the humidity, total precipitation amount and also the previous evening rain indicator.
+
+We will try to enhance this Logistic Regression model using only some of the more important features:
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['humidity (lag_1)','precip (lag_1)','rain_evening (lag_1)','monsoon_month','NW (lag_1)',#'cloudcover (lag_1)','windspeed (lag_1)','Month',
+     'sealevelpressure (lag_1)','SE (lag_1)','rain_dawn (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.30, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# over = SMOTE(sampling_strategy=0.5, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.5, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+def objective(trial):
+    model=LogisticRegression(solver='liblinear',
+                                penalty='l1',
+                                 C=2,
+                                 max_iter=5000,
+                                 #class_weight={0: 0.5,1: 0.5},
+                                 random_state=42
+                    )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+LR=LogisticRegression(**best_params)
+LR.fit(x_train, y_train)
+y_pred = LR.predict(x_val)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7282
+Precision:  0.7606
+Recall:  0.8838
+F1-Score:  0.8176
+array([[ 49,  79],
+       [ 33, 251]])
+</pre>
+
+Fortunately, we are able to replicate the performance using much less features available. And by validating it against unseen test data,
+
+<details>
+<summary>View Code</summary>
+
+```python
+y_pred = LR.predict(x_test)
+y_pred_proba = LR.predict_proba(x_test)[::,1]
+LR_fp, LR_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7039
+Precision:  0.7448
+Recall:  0.8746
+F1-Score:  0.8045
+array([[ 39,  86],
+       [ 36, 251]])
+</pre>
+
+## Naive Bayes
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['monsoon_month','Month','humidity (lag_1)','solarradiation (lag_1)', 'rain_evening (lag_1)']]#'Year','Month','Week','temp (lag_1)','cloudcover (lag_1)','windspeed (lag_1)', 
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.30, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# over = SMOTE(sampling_strategy=0.6, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.7, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+NB=GaussianNB()
+NB.fit(x_train,y_train)
+y_pred = NB.predict(x_val)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6772
+Precision:  0.7807
+Recall:  0.7394
+F1-Score:  0.7595
+array([[ 69,  59],
+       [ 74, 210]])
+</pre>
+
+<details>
+<summary>View Code</summary>
+
+### Test Performance
+
+```python
+y_pred = NB.predict(x_test)
+y_pred_proba = NB.predict_proba(x_test)[::,1]
+NB_fp, NB_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6796
+Precision:  0.7881
+Recall:  0.7387
+F1-Score:  0.7626
+array([[ 68,  57],
+       [ 75, 212]])
+</pre>
+
+## Decision Tree
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['monsoon_month','humidity (lag_1)','rain_evening (lag_1)','NW (lag_1)','sealevelpressure (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.30, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=42)
+
+over = SMOTE(sampling_strategy=0.5, random_state=42)
+under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+def objective(trial):
+    criterion = trial.suggest_categorical('criterion', ['gini', 'entropy','log_loss'])
+    splitter = trial.suggest_categorical('splitter', ['best','random'])
+    max_depth = trial.suggest_int('max_depth', 2, 10)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 30)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    max_features = trial.suggest_categorical('max_features', ['sqrt','log2'])
+    #random_state = trial.suggest_int('random_state', 1, 30)
+
+    # Create a decision tree regressor with the suggested hyperparameters
+    model=DecisionTreeClassifier(criterion=criterion,
+                                 splitter=splitter,
+                                 max_depth=max_depth,
+                                 min_samples_split=min_samples_split,
+                                 min_samples_leaf=min_samples_leaf,
+                                 max_features=max_features,
+                                 random_state=42
+                    )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=10)
+best_params = study.best_params
+
+DT=DecisionTreeClassifier(**best_params)
+DT.fit(x_train, y_train)
+y_pred = DT.predict(x_val)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6255
+Precision:  0.7139
+Recall:  0.7446
+F1-Score:  0.7289
+array([[ 67, 111],
+       [ 95, 277]])
+</pre>
+
+## Test Performance
+
+```python
+DT.fit(x_train, y_train)
+y_pred = DT.predict(x_test)
+y_pred_proba = DT.predict_proba(x_test)[::,1]
+DT_fp, DT_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6460
+Precision:  0.7485
+Recall:  0.7033
+F1-Score:  0.7252
+array([[ 49,  43],
+       [ 54, 128]])
+</pre>
+
+## K-Neighbors
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['humidity (lag_1)','precip (lag_1)','rain_evening (lag_1)','monsoon_month','NW (lag_1)',#'cloudcover (lag_1)','windspeed (lag_1)','Month',
+      'sealevelpressure (lag_1)','SE (lag_1)','rain_dawn (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.3, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# over = SMOTE(sampling_strategy=0.5, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+
+def objective(trial):
+    n_neighbors = trial.suggest_int('n_neighbors', 1, 20)
+    weights = trial.suggest_categorical('weights', ['uniform', 'distance'])
+    algorithm = trial.suggest_categorical('algorithm', ['auto', 'ball_tree', 'kd_tree', 'brute'])
+    p = trial.suggest_int('p', 1, 2)
+    leaf_size = trial.suggest_int('leaf_size', 1, 50)
+
+    # Create a decision tree regressor with the suggested hyperparameters
+    model = KNeighborsClassifier(n_neighbors=n_neighbors, 
+                                weights=weights, 
+                                algorithm=algorithm,
+                                p=p,
+                                leaf_size=leaf_size
+                               )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+KN=KNeighborsClassifier(**best_params)
+KN.fit(x_train, y_train)
+y_pred = KN.predict(x_val)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6869
+Precision:  0.7370
+Recall:  0.8486
+F1-Score:  0.7889
+array([[ 42,  86],
+       [ 43, 241]])
+</pre>
+
+## Test Performance
+
+```python
+y_pred = KN.predict(x_test)
+y_pred_proba = KN.predict_proba(x_test)[::,1]
+KN_fp, KN_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.6626
+Precision:  0.7312
+Recall:  0.8153
+F1-Score:  0.7710
+array([[ 39,  86],
+       [ 53, 234]])
+</pre>
+
+## Random Forest
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['Year','Month','Day','monsoon_month','moonphase (lag_1)','solarradiation (lag_1)','cloudcover (lag_1)','windspeed (lag_1)','visibility (lag_1)','humidity (lag_1)','precip (lag_1)','rain_dawn (lag_1)','rain_morning (lag_1)','rain_afternoon (lag_1)','rain_evening (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.3, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# over = SMOTE(sampling_strategy=0.5, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+
+def objective(trial):
+    # Define the hyperparameters to optimize
+    criterion = trial.suggest_categorical('criterion', ['gini','entropy','log_loss'])#, 'poisson'
+    max_depth = trial.suggest_int('max_depth', 2, 15)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 20)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    max_features = trial.suggest_categorical('max_features', ['sqrt','log2'])
+    #random_state = trial.suggest_int('random_state', 1, 30)
+    model = RandomForestClassifier(criterion=criterion, 
+                                  max_depth=max_depth, 
+                                  min_samples_split=min_samples_split, 
+                                  min_samples_leaf=min_samples_leaf, 
+                                  max_features=max_features,
+                                  random_state=42
+                                 )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=10)
+best_params = study.best_params
+
+RF=RandomForestClassifier(**best_params)
+RF.fit(x_train, y_train)
+y_pred = RF.predict(x_val)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7184
+Precision:  0.7471
+Recall:  0.8944
+F1-Score:  0.8141
+array([[ 42,  86],
+       [ 30, 254]])
+</pre>
+
+## Test Performance
+
+```python
+y_pred = RF.predict(x_test)
+y_pred_proba = RF.predict_proba(x_test)[::,1]
+RF_fp, RF_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7257
+Precision:  0.7500
+Recall:  0.9094
+F1-Score:  0.8220
+array([[ 38,  87],
+       [ 26, 261]])
+</pre>
+
+## MLP Classifier
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+from sklearn.neural_network import MLPClassifier
+
+X=df[['Month','humidity (lag_1)','precip (lag_1)','rain_evening (lag_1)','monsoon_month','NW (lag_1)',#'cloudcover (lag_1)','windspeed (lag_1)','Month',
+     'sealevelpressure (lag_1)','SE (lag_1)','rain_dawn (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.3, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# over = SMOTE(sampling_strategy=0.5, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.6, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+
+MLP = MLPClassifier(hidden_layer_sizes=(),activation='logistic', solver='lbfgs')
+MLP.fit(x_train, y_train)
+y_pred = MLP.predict(x_val)
+y_pred_proba = MLP.predict_proba(x_val)[::,1]
+MLP_fp, MLP_tp, _ = roc_curve(y_val,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7209
+Precision:  0.7568
+Recall:  0.8768
+F1-Score:  0.8124
+array([[ 48,  80],
+       [ 35, 249]])
+</pre>
+
+## Test Performance
+
+```python
+y_pred = MLP.predict(x_test)
+y_pred_proba = MLP.predict_proba(x_test)[::,1]
+MLP_fp, MLP_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+Accuracy:  0.7039
+Precision:  0.7448
+Recall:  0.8746
+F1-Score:  0.8045
+array([[ 39,  86],
+       [ 36, 251]])
+</pre>
