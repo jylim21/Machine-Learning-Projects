@@ -400,10 +400,6 @@ We will now extract the features from 'description' mentioned above, along with 
 warnings.filterwarnings(action='ignore', category=UserWarning)
 
 df['datetime'] = pd.to_datetime(df['datetime'])
-df['Year'] = df['datetime'].dt.year
-df['Month'] = df['datetime'].dt.month
-df['Day'] = df['datetime'].dt.day
-df = df.set_index('datetime').asfreq('D')
 df.drop(['windgust','name','precipprob','precipcover','preciptype','snow','snowdepth','severerisk','icon','conditions'], axis=1, inplace=True)
 df['description'] = df['description'].str.replace('Partly cloudy throughout the day','')
 df['description']=df['description'].str.replace('early morning','dawn')
@@ -415,6 +411,22 @@ df['rain_dawn'] = df['description'].str.contains(r'(dawn)').astype(int)
 df['rain_morning'] = df['description'].str.contains(r'(morning)').astype(int)
 df['rain_afternoon'] = df['description'].str.contains(r'(afternoon)').astype(int)
 df['rain_evening'] = df['description'].str.contains(r'(evening)').astype(int)
+
+def dir(bearing):
+    dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    index = int((bearing + 22.5) % 360 / 45)
+    return dirs[index]
+df['winddir'] = df['winddir'].apply(dir)
+winddir=pd.get_dummies(df['winddir'])
+df = pd.concat([df, winddir.set_index(df.index)], axis = 1)
+df.iloc[:,-8:]=df.iloc[:,-8:].astype(int)
+df.drop('winddir', axis=1, inplace=True)
+
+df['Year'] = df['datetime'].dt.year
+df['Month'] = df['datetime'].dt.month
+df['Day'] = df['datetime'].dt.day
+df = df.set_index('datetime').asfreq('D')
+
 warnings.resetwarnings()
 df.drop(['description','stations'], axis=1, inplace=True)
 df.head()
@@ -436,7 +448,6 @@ df.head()
       <th>humidity</th>
       <th>precip</th>
       <th>windspeed</th>
-      <th>winddir</th>
       <th>sealevelpressure</th>
       <th>cloudcover</th>
       <th>visibility</th>
@@ -446,16 +457,31 @@ df.head()
       <th>sunrise</th>
       <th>sunset</th>
       <th>moonphase</th>
-      <th>Year</th>
-      <th>Month</th>
-      <th>Day</th>
       <th>rain_dawn</th>
       <th>rain_morning</th>
       <th>rain_afternoon</th>
       <th>rain_evening</th>
+      <th>E</th>
+      <th>N</th>
+      <th>NE</th>
+      <th>NW</th>
+      <th>S</th>
+      <th>SE</th>
+      <th>SW</th>
+      <th>W</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
     </tr>
     <tr>
       <th>datetime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
       <th></th>
       <th></th>
@@ -496,7 +522,6 @@ df.head()
       <td>73.3</td>
       <td>0.0</td>
       <td>16.4</td>
-      <td>154.6</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.0</td>
@@ -506,13 +531,21 @@ df.head()
       <td>2016-07-01T07:08:07</td>
       <td>2016-07-01T19:26:07</td>
       <td>0.88</td>
-      <td>2016</td>
-      <td>7</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>1</td>
       <td>0</td>
       <td>0</td>
-      <td>0</td>
-      <td>0</td>
+      <td>2016</td>
+      <td>7</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>2016-07-02</th>
@@ -526,7 +559,6 @@ df.head()
       <td>71.9</td>
       <td>0.0</td>
       <td>14.8</td>
-      <td>147.9</td>
       <td>1009.8</td>
       <td>89.0</td>
       <td>9.1</td>
@@ -536,13 +568,21 @@ df.head()
       <td>2016-07-02T07:08:20</td>
       <td>2016-07-02T19:26:17</td>
       <td>0.92</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
       <td>2016</td>
       <td>7</td>
       <td>2</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
     </tr>
     <tr>
       <th>2016-07-03</th>
@@ -556,7 +596,6 @@ df.head()
       <td>68.5</td>
       <td>0.0</td>
       <td>15.7</td>
-      <td>151.6</td>
       <td>1009.9</td>
       <td>87.9</td>
       <td>9.8</td>
@@ -566,13 +605,21 @@ df.head()
       <td>2016-07-03T07:08:32</td>
       <td>2016-07-03T19:26:27</td>
       <td>0.95</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
       <td>2016</td>
       <td>7</td>
       <td>3</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
     </tr>
     <tr>
       <th>2016-07-04</th>
@@ -586,7 +633,6 @@ df.head()
       <td>72.4</td>
       <td>0.0</td>
       <td>12.5</td>
-      <td>188.0</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.1</td>
@@ -596,13 +642,21 @@ df.head()
       <td>2016-07-04T07:08:44</td>
       <td>2016-07-04T19:26:36</td>
       <td>0.00</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>2016</td>
       <td>7</td>
       <td>4</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
     </tr>
     <tr>
       <th>2016-07-05</th>
@@ -616,7 +670,6 @@ df.head()
       <td>76.6</td>
       <td>0.0</td>
       <td>18.4</td>
-      <td>182.1</td>
       <td>1008.4</td>
       <td>89.0</td>
       <td>8.4</td>
@@ -626,13 +679,21 @@ df.head()
       <td>2016-07-05T07:08:56</td>
       <td>2016-07-05T19:26:45</td>
       <td>0.02</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
       <td>2016</td>
       <td>7</td>
       <td>5</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
     </tr>
   </tbody>
 </table>
@@ -652,15 +713,13 @@ df=df.assign(**{
     })
 df['Rainfall'] = df['precip'].apply(lambda x: 1 if x > 0 else x)
 df['precipitation'] = df['precip']
-df = df.iloc[1:,20:].drop(['rain_dawn','rain_morning','rain_afternoon','rain_evening'], axis=1)
+df = df.iloc[1:,31:]
 df.head()
 ```
 
 ### Output
 </details>
-<pre>
-<table border="0" class="dataframe">  <tbody>
-    <tr style="text-align: right;">
+<pre><table border="0" class="dataframe"><tbody><tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
@@ -675,7 +734,6 @@ df.head()
       <th>humidity (lag_1)</th>
       <th>precip (lag_1)</th>
       <th>windspeed (lag_1)</th>
-      <th>winddir (lag_1)</th>
       <th>sealevelpressure (lag_1)</th>
       <th>cloudcover (lag_1)</th>
       <th>visibility (lag_1)</th>
@@ -689,11 +747,26 @@ df.head()
       <th>rain_morning (lag_1)</th>
       <th>rain_afternoon (lag_1)</th>
       <th>rain_evening (lag_1)</th>
+      <th>E (lag_1)</th>
+      <th>N (lag_1)</th>
+      <th>NE (lag_1)</th>
+      <th>NW (lag_1)</th>
+      <th>S (lag_1)</th>
+      <th>SE (lag_1)</th>
+      <th>SW (lag_1)</th>
+      <th>W (lag_1)</th>
       <th>Rainfall</th>
       <th>precipitation</th>
     </tr>
     <tr>
       <th>datetime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
       <th></th>
       <th></th>
@@ -739,7 +812,6 @@ df.head()
       <td>73.3</td>
       <td>0.0</td>
       <td>16.4</td>
-      <td>154.6</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.0</td>
@@ -751,6 +823,14 @@ df.head()
       <td>0.88</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -771,7 +851,6 @@ df.head()
       <td>71.9</td>
       <td>0.0</td>
       <td>14.8</td>
-      <td>147.9</td>
       <td>1009.8</td>
       <td>89.0</td>
       <td>9.1</td>
@@ -783,6 +862,14 @@ df.head()
       <td>0.92</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -803,7 +890,6 @@ df.head()
       <td>68.5</td>
       <td>0.0</td>
       <td>15.7</td>
-      <td>151.6</td>
       <td>1009.9</td>
       <td>87.9</td>
       <td>9.8</td>
@@ -815,6 +901,14 @@ df.head()
       <td>0.95</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -835,7 +929,6 @@ df.head()
       <td>72.4</td>
       <td>0.0</td>
       <td>12.5</td>
-      <td>188.0</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.1</td>
@@ -846,6 +939,14 @@ df.head()
       <td>2016-07-04T19:26:36</td>
       <td>0.00</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -867,7 +968,6 @@ df.head()
       <td>76.6</td>
       <td>0.0</td>
       <td>18.4</td>
-      <td>182.1</td>
       <td>1008.4</td>
       <td>89.0</td>
       <td>8.4</td>
@@ -881,10 +981,16 @@ df.head()
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
       <td>1.0</td>
-      <td>15.913</td>
-    </tr>
-  </tbody>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>15.913</td></tr></tbody>
 </table>
 </pre>
 
@@ -979,7 +1085,7 @@ By looking at the distribution of individual features, we would be able to ident
 <summary>View Code</summary>
 
 ```python
-fig, axes = plt.subplots(nrows=6, ncols=4, figsize=(12,20))
+fig, axes = plt.subplots(nrows=8, ncols=4, figsize=(12,20))
 for i, column in enumerate(df.drop(['Rainfall','sunset (lag_1)','sunrise (lag_1)','Year','Month','Day'], axis=1).columns):
     sns.histplot(df[column],ax=axes[i//4,i%4])
 ```
@@ -999,7 +1105,7 @@ There are no obvious relationship found between these features and precipitation
 <summary>View Code</summary>
 
 ```python
-fig, axes = plt.subplots(nrows=7, ncols=4, figsize=(12,25))
+fig, axes = plt.subplots(nrows=9, ncols=4, figsize=(12,25))
 for i, column in enumerate(df.drop(['Rainfall','sunrise (lag_1)','sunset (lag_1)'], axis=1).columns):
     sns.scatterplot(x=df[column], y=df['precipitation'],ax=axes[i//4,i%4])
 ```
@@ -1019,7 +1125,7 @@ From the heatmap below, it is obvious that the temperature components are pretty
 <summary>View Code</summary>
 
 ```python
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(15, 10))
 sns.heatmap(df.drop(['sunrise (lag_1)','sunset (lag_1)'],axis=1).corr(), annot=True, cmap='coolwarm', fmt=".1f", linewidths=0.5)
 plt.show()
 ```
@@ -1037,9 +1143,7 @@ df.head()
 
 ### Output
 
-<pre><table border="0" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
+<pre><table border="0" class="dataframe"><thead><tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
@@ -1048,7 +1152,6 @@ df.head()
       <th>humidity (lag_1)</th>
       <th>precip (lag_1)</th>
       <th>windspeed (lag_1)</th>
-      <th>winddir (lag_1)</th>
       <th>sealevelpressure (lag_1)</th>
       <th>cloudcover (lag_1)</th>
       <th>visibility (lag_1)</th>
@@ -1058,12 +1161,27 @@ df.head()
       <th>rain_morning (lag_1)</th>
       <th>rain_afternoon (lag_1)</th>
       <th>rain_evening (lag_1)</th>
+      <th>E (lag_1)</th>
+      <th>N (lag_1)</th>
+      <th>NE (lag_1)</th>
+      <th>NW (lag_1)</th>
+      <th>S (lag_1)</th>
+      <th>SE (lag_1)</th>
+      <th>SW (lag_1)</th>
+      <th>W (lag_1)</th>
       <th>Rainfall</th>
       <th>precipitation</th>
       <th>monsoon_month</th>
     </tr>
     <tr>
       <th>datetime</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
       <th></th>
       <th></th>
       <th></th>
@@ -1094,7 +1212,6 @@ df.head()
       <td>73.3</td>
       <td>0.0</td>
       <td>16.4</td>
-      <td>154.6</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.0</td>
@@ -1102,6 +1219,14 @@ df.head()
       <td>0.88</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1117,7 +1242,6 @@ df.head()
       <td>71.9</td>
       <td>0.0</td>
       <td>14.8</td>
-      <td>147.9</td>
       <td>1009.8</td>
       <td>89.0</td>
       <td>9.1</td>
@@ -1125,6 +1249,14 @@ df.head()
       <td>0.92</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1140,7 +1272,6 @@ df.head()
       <td>68.5</td>
       <td>0.0</td>
       <td>15.7</td>
-      <td>151.6</td>
       <td>1009.9</td>
       <td>87.9</td>
       <td>9.8</td>
@@ -1148,6 +1279,14 @@ df.head()
       <td>0.95</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1163,13 +1302,20 @@ df.head()
       <td>72.4</td>
       <td>0.0</td>
       <td>12.5</td>
-      <td>188.0</td>
       <td>1009.1</td>
       <td>89.0</td>
       <td>9.1</td>
       <td>221.2</td>
       <td>0.00</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1186,13 +1332,20 @@ df.head()
       <td>76.6</td>
       <td>0.0</td>
       <td>18.4</td>
-      <td>182.1</td>
       <td>1008.4</td>
       <td>89.0</td>
       <td>8.4</td>
       <td>139.2</td>
       <td>0.02</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1226,7 +1379,6 @@ dew (lag_1)               float64  0 (0%)      0 (0%)
 humidity (lag_1)          float64  0 (0%)      0 (0%)
 precip (lag_1)            float64  0 (0%)   903 (32%)
 windspeed (lag_1)         float64  0 (0%)      0 (0%)
-winddir (lag_1)           float64  0 (0%)      0 (0%)
 sealevelpressure (lag_1)  float64  0 (0%)      0 (0%)
 cloudcover (lag_1)        float64  0 (0%)      0 (0%)
 visibility (lag_1)        float64  0 (0%)      0 (0%)
@@ -1236,13 +1388,21 @@ rain_dawn (lag_1)         float64  0 (0%)  1850 (67%)
 rain_morning (lag_1)      float64  0 (0%)  1805 (65%)
 rain_afternoon (lag_1)    float64  0 (0%)  1821 (66%)
 rain_evening (lag_1)      float64  0 (0%)  1611 (58%)
+E (lag_1)                 float64  0 (0%)  2668 (97%)
+N (lag_1)                 float64  0 (0%)  2623 (95%)
+NE (lag_1)                float64  0 (0%)  2622 (95%)
+NW (lag_1)                float64  0 (0%)  1921 (69%)
+S (lag_1)                 float64  0 (0%)  2236 (81%)
+SE (lag_1)                float64  0 (0%)  2405 (87%)
+SW (lag_1)                float64  0 (0%)  2473 (90%)
+W (lag_1)                 float64  0 (0%)  2274 (82%)
 Rainfall                  float64  0 (0%)   902 (32%)
 precipitation             float64  0 (0%)   902 (32%)
 monsoon_month               int64  0 (0%)  1831 (66%)
 </pre>
 
 # Feature Scaling
-by scaling each feature to the range (0,1) using SKlearn's MinMaxSaler, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
+by scaling each feature to the range (0,1) using SKlearn's **MinMaxSaler**, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
 
 <details>
 <summary>View Code</summary>
@@ -1250,18 +1410,16 @@ by scaling each feature to the range (0,1) using SKlearn's MinMaxSaler, all nume
 ```python
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
-df_bin=df.iloc[:,-7:]
+df_bin=df.iloc[:,-14:]
 df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
-df.iloc[:,-7:]=df_bin
+df.iloc[:,-14:]=df_bin
 df.drop('precipitation', axis=1, inplace=True)
 df.head()
 ```
 
 ### Output
 </details>
-<pre>
-<table border="0" class="dataframe"><tbody>
-    <tr style="text-align: right;">
+<pre><table border="0" class="dataframe">  <thead>    <tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
@@ -1270,7 +1428,6 @@ df.head()
       <th>humidity (lag_1)</th>
       <th>precip (lag_1)</th>
       <th>windspeed (lag_1)</th>
-      <th>winddir (lag_1)</th>
       <th>sealevelpressure (lag_1)</th>
       <th>cloudcover (lag_1)</th>
       <th>visibility (lag_1)</th>
@@ -1280,6 +1437,14 @@ df.head()
       <th>rain_morning (lag_1)</th>
       <th>rain_afternoon (lag_1)</th>
       <th>rain_evening (lag_1)</th>
+      <th>E (lag_1)</th>
+      <th>N (lag_1)</th>
+      <th>NE (lag_1)</th>
+      <th>NW (lag_1)</th>
+      <th>S (lag_1)</th>
+      <th>SE (lag_1)</th>
+      <th>SW (lag_1)</th>
+      <th>W (lag_1)</th>
       <th>Rainfall</th>
       <th>monsoon_month</th>
     </tr>
@@ -1292,7 +1457,6 @@ df.head()
       <td>0.350725</td>
       <td>0.0</td>
       <td>0.337423</td>
-      <td>0.428651</td>
       <td>0.360465</td>
       <td>0.914616</td>
       <td>0.690909</td>
@@ -1300,6 +1464,14 @@ df.head()
       <td>0.897959</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1314,7 +1486,6 @@ df.head()
       <td>0.310145</td>
       <td>0.0</td>
       <td>0.288344</td>
-      <td>0.409978</td>
       <td>0.441860</td>
       <td>0.914616</td>
       <td>0.709091</td>
@@ -1322,6 +1493,14 @@ df.head()
       <td>0.938776</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1336,7 +1515,6 @@ df.head()
       <td>0.211594</td>
       <td>0.0</td>
       <td>0.315951</td>
-      <td>0.420290</td>
       <td>0.453488</td>
       <td>0.898698</td>
       <td>0.836364</td>
@@ -1344,6 +1522,14 @@ df.head()
       <td>0.969388</td>
       <td>0.0</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1358,13 +1544,20 @@ df.head()
       <td>0.324638</td>
       <td>0.0</td>
       <td>0.217791</td>
-      <td>0.521739</td>
       <td>0.360465</td>
       <td>0.914616</td>
       <td>0.709091</td>
       <td>0.672764</td>
       <td>0.000000</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1380,13 +1573,20 @@ df.head()
       <td>0.446377</td>
       <td>0.0</td>
       <td>0.398773</td>
-      <td>0.505295</td>
       <td>0.279070</td>
       <td>0.914616</td>
       <td>0.581818</td>
       <td>0.394986</td>
       <td>0.020408</td>
       <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
       <td>0.0</td>
       <td>0.0</td>
       <td>0.0</td>
@@ -1400,7 +1600,7 @@ df.head()
 # Model Building
 For a binary classification problem like this, the **Logistic Regression** model would be the baseline model due to it's simple yet highly interpretable nature. 
 
-As for the split, we opt for a 70% train, 20% validation and 10% test split, where the train data is cross-validated on 8 folds with the validation data before evaluating it using the test data.
+As for the split, we opt for a 70% train, 15% validation and 15% test split, where the train data is cross-validated on 8 folds with the validation data before evaluating it using the test data.
 
 Also, for any classification problems, we should always check if there is any serious imbalance in the outcomes, otherwise the model might not learn well the parameters for each outcome.
 
