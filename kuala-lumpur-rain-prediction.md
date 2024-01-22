@@ -2195,3 +2195,163 @@ F1-Score:  0.8045
 array([[ 39,  86],
        [ 36, 251]])
 </pre>
+
+## Sequential NN
+### Validation Performance
+
+<details>
+<summary>View Code</summary>
+
+```python
+import tensorflow as tf
+from tensorflow.keras import Model, Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Dense, Dropout, LSTM, Embedding
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.losses import BinaryCrossentropy
+
+X=df[['Year','Month','Day','monsoon_month','moonphase (lag_1)','solarradiation (lag_1)','cloudcover (lag_1)','windspeed (lag_1)','visibility (lag_1)','humidity (lag_1)','precip (lag_1)','rain_dawn (lag_1)','rain_morning (lag_1)','rain_afternoon (lag_1)','rain_evening (lag_1)']]
+y=df['Rainfall']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.3, random_state=42)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=24)
+
+# Creating model using the Sequential in tensorflow
+NN = Sequential()
+NN.add(Dense(512, activation='relu', input_dim=15))
+NN.add(Dropout(0.2))
+NN.add(Dense(1, activation='sigmoid'))
+NN.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+hist = NN.fit(x_train, y_train, epochs=30, batch_size=10, validation_split=0.2)
+NN.summary()
+```
+
+### Output
+</details>
+<pre>
+Epoch 1/30
+154/154 [==============================] - 1s 3ms/step - loss: 0.6248 - accuracy: 0.6649 - val_loss: 0.6248 - val_accuracy: 0.6519
+Epoch 2/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.6127 - accuracy: 0.6649 - val_loss: 0.6189 - val_accuracy: 0.6519
+Epoch 3/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.6071 - accuracy: 0.6649 - val_loss: 0.6163 - val_accuracy: 0.6519
+Epoch 4/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.6042 - accuracy: 0.6649 - val_loss: 0.6129 - val_accuracy: 0.6519
+Epoch 5/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5995 - accuracy: 0.6656 - val_loss: 0.6105 - val_accuracy: 0.6519
+Epoch 6/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5964 - accuracy: 0.6669 - val_loss: 0.6095 - val_accuracy: 0.6597
+Epoch 7/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5980 - accuracy: 0.6701 - val_loss: 0.6078 - val_accuracy: 0.6597
+Epoch 8/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5953 - accuracy: 0.6721 - val_loss: 0.6069 - val_accuracy: 0.6675
+Epoch 9/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5941 - accuracy: 0.6727 - val_loss: 0.6061 - val_accuracy: 0.6701
+Epoch 10/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5945 - accuracy: 0.6727 - val_loss: 0.6056 - val_accuracy: 0.6701
+Epoch 11/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5916 - accuracy: 0.6786 - val_loss: 0.6049 - val_accuracy: 0.6649
+Epoch 12/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5921 - accuracy: 0.6766 - val_loss: 0.6045 - val_accuracy: 0.6649
+Epoch 13/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5919 - accuracy: 0.6838 - val_loss: 0.6041 - val_accuracy: 0.6727
+Epoch 14/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5905 - accuracy: 0.6845 - val_loss: 0.6043 - val_accuracy: 0.6753
+Epoch 15/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5910 - accuracy: 0.6864 - val_loss: 0.6038 - val_accuracy: 0.6597
+Epoch 16/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5885 - accuracy: 0.6786 - val_loss: 0.6038 - val_accuracy: 0.6805
+Epoch 17/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5887 - accuracy: 0.6845 - val_loss: 0.6031 - val_accuracy: 0.6779
+Epoch 18/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5897 - accuracy: 0.6845 - val_loss: 0.6042 - val_accuracy: 0.6779
+Epoch 19/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5878 - accuracy: 0.6858 - val_loss: 0.6029 - val_accuracy: 0.6727
+Epoch 20/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5883 - accuracy: 0.6871 - val_loss: 0.6028 - val_accuracy: 0.6831
+Epoch 21/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5899 - accuracy: 0.6871 - val_loss: 0.6023 - val_accuracy: 0.6805
+Epoch 22/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5869 - accuracy: 0.6942 - val_loss: 0.6022 - val_accuracy: 0.6857
+Epoch 23/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5853 - accuracy: 0.6890 - val_loss: 0.6020 - val_accuracy: 0.6727
+Epoch 24/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5873 - accuracy: 0.6884 - val_loss: 0.6020 - val_accuracy: 0.6805
+Epoch 25/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5858 - accuracy: 0.6949 - val_loss: 0.6024 - val_accuracy: 0.6883
+Epoch 26/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5863 - accuracy: 0.6936 - val_loss: 0.6014 - val_accuracy: 0.6883
+Epoch 27/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5852 - accuracy: 0.6864 - val_loss: 0.6012 - val_accuracy: 0.6831
+Epoch 28/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5857 - accuracy: 0.6910 - val_loss: 0.6011 - val_accuracy: 0.6857
+Epoch 29/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5847 - accuracy: 0.6897 - val_loss: 0.6016 - val_accuracy: 0.6701
+Epoch 30/30
+154/154 [==============================] - 0s 2ms/step - loss: 0.5870 - accuracy: 0.6962 - val_loss: 0.6008 - val_accuracy: 0.6909
+Model: "sequential_2"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense_4 (Dense)             (None, 512)               8192      
+                                                                 
+ dropout_2 (Dropout)         (None, 512)               0         
+                                                                 
+ dense_5 (Dense)             (None, 1)                 513       
+                                                                 
+=================================================================
+Total params: 8705 (34.00 KB)
+Trainable params: 8705 (34.00 KB)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________
+</pre>
+
+## Test Performance
+
+```python
+y_pred = NN.predict(x_test) >0.5
+NN_fp, NN_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+
+### Output
+</details>
+<pre>
+13/13 [==============================] - 0s 1ms/step
+Accuracy:  0.7282
+Precision:  0.7479
+Recall:  0.9199
+F1-Score:  0.8250
+array([[ 36,  89],
+       [ 23, 264]])
+</pre>
+
+# Performance Comparison
+
+<details>
+<summary>View Code</summary>
+
+```python
+plt.plot(LR_fp,LR_tp, color='blue', label='Logistic Regression')
+plt.plot(NB_fp,NB_tp, color='red', label='Naive Bayes')
+plt.plot(DT_fp,DT_tp, color='cyan', label='Decision Tree')
+plt.plot(KN_fp,KN_tp, color='green', label='KNN')
+plt.plot(RF_fp,RF_tp, color='pink', label='Random Forest')
+plt.plot(MLP_fp,MLP_tp, color='orange', label='MLP')
+plt.plot(NN_fp,NN_tp, color='orange', label='MLP')
+plt.plot([0,1],[0,1],'--', color='black')
+plt.title('ROC Curve Comparison')
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.legend(loc=4)
+plt.show()
+```
+
+### Output
+</details>
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/kuala-lumpur-rain-prediction/images/9.png?raw=true)
