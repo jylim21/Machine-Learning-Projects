@@ -1,4 +1,5 @@
-# This is the page
+# Bear With Data!
+*You just have to bear with it!*
 
 ## Select the projects below
 * [Laptop Prices Prediction](laptop-price-prediction/readme.md)
