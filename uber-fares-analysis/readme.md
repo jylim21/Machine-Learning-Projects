@@ -1,6 +1,6 @@
 <h1 align="center">Data Visualization: Uber Fares Analysis</h1>
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/uber.jpg?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/uber.jpg?raw=true)
 
 In 2023, *Uber* has a reported active drivers reaching 1.5 million in the United States alone, occupying up to 74% of the global e-hailing market.
 
@@ -215,11 +215,11 @@ display(mymap)
 ```
 </details>
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/3.jpg' height='400' width='400'> <img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/4.jpg' width='400'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/3.jpg' height='400' width='400'> <img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/4.jpg' width='400'>
 
 By plotting the coordinates on a map, we know for sure that this driver is based in New York (Manhattan to be precise). Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/5.jpg' width='800'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/5.jpg' width='800'>
 
 The zero entries removed earlier were just the tip of an iceberg, we need to screen through the coordinates and eliminate any anomalies such as:
 
@@ -834,7 +834,7 @@ sns.boxplot(data=df['passenger_count'], orient='h', ax=axs[1]).set(title='passen
 plt.show()
 ```
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/6.png'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/6.png'>
 There might seem a little too many extreme values in the fare_amount, but don't forget this is a really massive dataset so it is acceptable. 
 As for passenger_count, it looks like most of the trips have 1 to 2 passengers which is reasonable since Uber cars are mostly 4-seaters.
 
@@ -843,7 +843,7 @@ As for passenger_count, it looks like most of the trips have 1 to 2 passengers w
 sns.boxplot(data=df, y='passenger_count', x='fare_amount', orient='h')
 ```
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/9.png'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/9.png'>
 
 Although at first glance it seems that fares for 1 passenger are higher, but if we look closely, they are all outliers and in fact, they all have the same quartiles. This means fares are not determined by number of passengers.
 
@@ -853,7 +853,7 @@ sns.boxplot(data=df[df['fare_amount']<30], y='passenger_count', x='fare_amount',
 df.groupby('passenger_count')['fare_amount'].describe()
 ```
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/Uber/images/10.png'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/10.png'>
 
 <pre>
                     count       mean        std   min  25%  50%   75%     max
