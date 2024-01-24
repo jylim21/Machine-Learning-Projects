@@ -6,3 +6,5 @@ plugins:
 pages:
 - uber_fares_analysis.md
 - laptop_price_prediction.md
+- daily-temperature-forecast.md
+- kuala-lumpur-rain-prediction.md
