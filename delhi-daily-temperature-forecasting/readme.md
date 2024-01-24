@@ -1,6 +1,6 @@
 <h1 align="center">Time Series: Temperature Forecasting</h1>
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/temperature.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/temperature.png?raw=true)
 
 New Delhi experiences large seasonal temperature swings typical of North India’s inland plains climate. Summers are notoriously hot, with temperatures often crossing 40°C (104°F). Monsoon rains bring some relief during July-August before autumn's comfortable period. Come December through February, cold waves drop minimums to freezing levels.
 
@@ -162,7 +162,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/1.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/1.png?raw=true)
 
 ### Bivariate Analysis
 This is a good way to observe if there are any interaction between meantemp and other features. 
@@ -184,7 +184,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/2.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/2.png?raw=true)
 
 # Data Cleansing
 From what we saw on *wind_speed* and *meanpressure*, it's time to cleanse these features.
@@ -215,7 +215,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/3.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/3.png?raw=true)
 
 ### meanpressure
 * Outliers in both extreme ends will be capped to the 1st and 99th percentile.
@@ -235,7 +235,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/4.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/4.png?raw=true)
 
 The treated features should give us a clearer presentation of their distribution and pairwise relationship, let's see if this is true:
 
@@ -245,7 +245,7 @@ pair_plot(df_train)
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/5.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/5.png?raw=true)
 
 
 ## Time Series decomposition of Temperature
@@ -268,7 +268,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/6.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/6.png?raw=true)
 
 Let's look at the different components of *meantemp*.
 * Trend - There seems to be an upward trend, global warming is real!
@@ -337,7 +337,7 @@ plt.show()
 ```
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/7.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/7.png?raw=true)
 
 Based on the ACF and PACF plots
 * m=52 since it has an annual cycle equivalent to 52 weeks
@@ -360,7 +360,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/8.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/8.png?raw=true)
 
 Now there is definitely no trend, no further differencing required.
 
@@ -419,7 +419,7 @@ plt.show()
 ```
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/9.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/9.png?raw=true)
 
 For the differenced series d=1, both ACF and PACF are significant after lag 1, this seems like a better model to be fitted so **we will use this model instead**.
 
@@ -590,7 +590,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/10.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/10.png?raw=true)
 
 The residuals are normally distributed, another tick on our checklist!
 
@@ -610,7 +610,7 @@ plt.show()
 
 ### Output
 
-![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/daily-temperature-forecasting/images/11.png?raw=true)
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/delhi-daily-temperature-forecasting/images/11.png?raw=true)
 
 This looks like a fairly good fit, but we are more interested in it's prediction accuracy on unseen data. Let's bring out our test data and put this model to the ultimate test! (no pun intended)
 
