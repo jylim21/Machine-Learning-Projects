@@ -4,7 +4,7 @@ plugins:
 - jekyll-remote-theme
 
 pages:
-- uber_fares_analysis.md
+- uber-fares-analysis/uber_fares_analysis.md
 - laptop_price_prediction.md
 - daily-temperature-forecast.md
 - kuala-lumpur-rain-prediction.md
