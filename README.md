@@ -1,7 +1,7 @@
 # This is the page
 
 ## Select the projects below
-* [Laptop Prices Prediction](laptop_price_prediction.md)
+* [Laptop Prices Prediction](laptop-price-prediction/readme.md)
 * [Uber Fares Analysis](uber-fares-analysis/readme.md)
-* [Delhi Temperature Forecasting](daily-temperature-forecast.md)
-* [Kuala Lumpur Rain Prediction](kuala-lumpur-rain-prediction.md)
+* [Delhi Temperature Forecasting](delhi-daily-temperature-forecast/readme.md)
+* [Kuala Lumpur Rain Prediction](kuala-lumpur-rain-prediction/readme.md)
