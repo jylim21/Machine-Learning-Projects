@@ -17,6 +17,7 @@ As usual, we will begin with importing the common libraries such as pandas, nump
 <summary>View Code</summary>
 
 ```python
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -63,6 +64,7 @@ def pair_plot(df):
     g.map_upper(corrdot)
     g.fig.suptitle('Pairplot of Numerical Variables', y=1.02)
     plt.show()
+
 ```
 </details>
 
