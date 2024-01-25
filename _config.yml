@@ -1,5 +1,5 @@
 title: bear-with-data
-remote_theme: jylim21/jekyll-text-theme
+remote_theme: jylim21/web-theme/jekyll-text-theme
 plugins:
 - jekyll-remote-theme
 
