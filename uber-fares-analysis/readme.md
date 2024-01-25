@@ -74,8 +74,7 @@ dropoff_longitude  float64  1 (0%)  3764 (1%)
 dropoff_latitude   float64  1 (0%)  3758 (1%)
 passenger_count      int64  0 (0%)   709 (0%)
 
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -215,11 +214,11 @@ display(mymap)
 ```
 </details>
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/3.jpg' height='400' width='400'> <img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/4.jpg' width='400'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/3.jpg) ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/4.jpg)
 
 By plotting the coordinates on a map, we know for sure that this driver is based in New York (Manhattan to be precise). Unfortunately, this map also exposes many other problematic coordinates provided to us, there are a few coordinates which are in the sea, Europe, Africa, and even Antartica!
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/5.jpg' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/uber-fares-analysis/images/5.jpg)
 
 The zero entries removed earlier were just the tip of an iceberg, we need to screen through the coordinates and eliminate any anomalies such as:
 
@@ -232,8 +231,7 @@ df[(abs(df['pickup_latitude'])>90)|(abs(df['dropoff_latitude'])>90)|(abs(df['dro
 ```
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -311,8 +309,7 @@ df[(df['pickup_latitude']<-70) | (df['dropoff_latitude']<-70)].head()
 ```		
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -390,8 +387,7 @@ df[abs(df['pickup_longitude']-df['dropoff_longitude'])>40].head()
 ```
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -470,8 +466,7 @@ df[(abs(df['pickup_longitude'])<1) | (abs(df['dropoff_longitude'])<1)].head()
 ```
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -549,8 +544,7 @@ df[(df['pickup_latitude'] == df['dropoff_latitude']) & (df['dropoff_longitude'] 
 ```
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
@@ -665,8 +659,7 @@ df.head()
 
 ### Output
 <pre>
-<table border="1" class="dataframe">
-  <tbody>
+<table border="0" class="dataframe"><tbody>
     <tr style="text-align: right;">
       <th></th>
       <th>trip</th>
