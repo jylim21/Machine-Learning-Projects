@@ -511,7 +511,7 @@ sns.set(rc={'figure.figsize':(15,8.27)})
 print(ax.bar_label(container=ax.containers[0], labels=df_train['Manufacturer'].value_counts(ascending=False).values))
 ```
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.jpg' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.png?raw=true)
 
 **Price Breakdown by Brand:**
 
@@ -529,7 +529,7 @@ print(sns.boxplot(x=df_train['Price'], y=df_train['Manufacturer'],orient='h', or
 ```
 
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/2.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/2.png?raw=true)
 
 **Price Breakdown by Laptop Category**
 
