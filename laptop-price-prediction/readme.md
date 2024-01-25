@@ -511,7 +511,7 @@ sns.set(rc={'figure.figsize':(15,8.27)})
 print(ax.bar_label(container=ax.containers[0], labels=df_train['Manufacturer'].value_counts(ascending=False).values))
 ```
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.png' width='800'>
+<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/1.jpg' width='800'>
 
 **Price Breakdown by Brand:**
 
