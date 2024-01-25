@@ -1420,7 +1420,7 @@ df.head()
 
 ### Output
 </details>
-<pre><table border="0" class="dataframe">  <thead>    <tr style="text-align: right;">
+<pre><table border="0" class="dataframe">  <tbody>    <tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
