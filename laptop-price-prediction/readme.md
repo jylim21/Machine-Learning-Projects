@@ -542,7 +542,7 @@ print(sns.boxplot(x=df_train['Price'], y=df_train['Category'],orient='h', order=
 ```
 
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/3.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/3.png?raw=true)
 
 **Price Breakdown by Operating System Version**
 
@@ -551,7 +551,7 @@ sns.boxplot(x=df_train['Price'], y=df_train['OS'],orient='h', order=["Android  "
 ```
 
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/4.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/4.png?raw=true)
 
 **Qualitative Variable EDA (Correlation)**
 
@@ -563,7 +563,7 @@ sns.heatmap(df_train.corr())#, annot=True, fmt=".1f")
 ```
 
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/5.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/5.png?raw=true)
 
 By focusing only on variables which are highly correlated with Price, we can deduce the following:
 
@@ -575,7 +575,7 @@ sns.heatmap(df_train[['Price','RAM','SSD','Category','Resolution_1','Intel_Core_
 ```
 
 ### Output
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/6.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/6.png?raw=true)
 
 # Data Transformation
 
@@ -608,7 +608,7 @@ df_test['Weight']=np.log(df_test['Weight'])
 
 ### Output
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/7.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/7.png?raw=true)
 
 # Feature Engineering
 We will now perform **One-Hot Encoding** on the string columns 'Manufacturer' and 'OS' to assign a binary indicator column for each unique value, and keep only n-1 of those values.
@@ -1251,7 +1251,7 @@ plt.show()
 
 ### Output
 
-<img src='https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/8.png' width='800'>
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/laptop-price-prediction/images/8.png?raw=true)
 
 ## Ensemble - Random Forest, GBM, LGBM, XGB
 Since the previous algorithms does not seem to meet our expectations, if we are merely interested in improving prediction accuracy, we could try out some Ensemble algorithms to improve our predictions:
