@@ -698,7 +698,7 @@ df.head()
   </tbody>
 </table>
 </pre>
-</details>
+
 
 ## Important: Prediction Based on Historical Information
 An important thing to note here is the next day's Rainfall should be predicted based on data that is available on the day before, and NOT data on the current day (as data on the current day can only be obtained at the end of the day). Therefore, we will bring the weather data 1 day forward.
@@ -1144,7 +1144,7 @@ df.head()
 
 ### Output
 
-<pre><table border="0" class="dataframe"><thead><tr style="text-align: right;">
+<pre><table border="0" class="dataframe"><tbody><tr style="text-align: right;">
       <th></th>
       <th>Year</th>
       <th>Month</th>
@@ -1403,7 +1403,7 @@ monsoon_month               int64  0 (0%)  1831 (66%)
 </pre>
 
 # Feature Scaling
-by scaling each feature to the range (0,1) using SKlearn's **MinMaxSaler**, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
+By scaling each feature to the range (0,1) using SKlearn's **MinMaxSaler**, all numerical features will fall within the same range. This will improve the performance of distance-based algorithms and speed up the convergence of gradient descent algorithms in the next part.
 
 <details>
 <summary>View Code</summary>
