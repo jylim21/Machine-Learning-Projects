@@ -1,9 +1,7 @@
 title: bear-with-data
-remote_theme: jylim21/web-theme
+remote_theme: jekyll-text-theme
 plugins:
 - jekyll-remote-theme
-
-highlight_theme: tomorrow-night
 
 pages:
 - uber-fares-analysis/uber_fares_analysis.md
