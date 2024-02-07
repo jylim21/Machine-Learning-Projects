@@ -13,6 +13,7 @@ Operationalizing these data-driven default predictions can help banks substantia
 The dataset used here is the [Loan Classification Dataset](https://www.kaggle.com/datasets/abhishek14398/loan-dataset) by *ALLENA VENKATA SAI ABY*, the free version allows users to export daily data on temperature, humidity, wind, solar, and precipitation etc. for different location with a daily limit of 1000 rows. Since this dataset contains data from July 2016 to Dec 2023, it took me 3 days to get the data required.
 
 It consists of a portfolio of approved loans which were either Fully Paid, Charged Off, or still ongoing (current) with no certain outcome. Our objective is to predict the outcomes of these current loans which would give the Loan Commissioner a probabilistic estimate of recoveries on the current portfolio, and hopefully, a way to screen borrowers based on their initial details. 
+
 <details>
 <summary>View Code</summary>
   
@@ -243,3 +244,493 @@ There are way too many features (111) to analyse this dataset effectively, but w
 <li> <b>Duration between credit pulls</b> = last credit pull date - first credit pull date </li>
 </ul>
 </ol>
+
+<details>
+<summary>View Code</summary>
+
+```python
+# Removing columns having only 1 unique value
+df.drop(df.columns[49:105],axis=1, inplace=True)
+df.drop(df.columns[50:55],axis=1, inplace=True)
+df.drop(['out_prncp','out_prncp_inv'], axis=1, inplace=True)
+
+# Remove recovery columns which would introduce data leakage (because only default loans will have recoveries)
+df.drop(['recoveries','collection_recovery_fee','total_rec_late_fee'], axis=1, inplace=True)
+
+# Removing columns which are either duplicates of other columns, or a waste of time to process
+df.drop(['id','member_id','emp_title','url','pymnt_plan','desc','title','addr_state','zip_code','initial_list_status','mths_since_last_delinq','mths_since_last_record','next_pymnt_d'], axis=1, inplace=True)
+
+# Transforming string/object columns into a numerical format
+df['term']=df['term'].replace({' 36 months':36, ' 60 months':60}).astype(int)
+df['grade']=df['grade'].replace({'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6})
+df['sub_grade']=df['sub_grade'].str[1].astype(int)
+df['emp_length']=df['emp_length'].str.replace(r' year[s]?','', regex=True)
+df['emp_length']=df['emp_length'].replace({'10+':10,'< 1':0.5,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10+':10})
+df['source_verified'] = df['verification_status'].apply(lambda x: 1 if x == 'Source Verified' else 0)
+df['income_verified'] = df['verification_status'].apply(lambda x: 0 if x == 'Not Verified' else 1)
+df['int_rate']=df['int_rate'].str.replace('%','').astype(float)
+df['revol_util']=df['revol_util'].str.replace('%','').astype(float)
+df['loan_status']=df['loan_status'].replace({'Fully Paid':0, 'Charged Off':1}).astype(int)
+df['earliest_cr_line'] = pd.to_datetime(df['earliest_cr_line'], format='%b-%y')
+df['last_credit_pull_d'] = pd.to_datetime(df['last_credit_pull_d'], format='%b-%y')
+df['issue_d'] = pd.to_datetime(df['issue_d'], format='%b-%y')
+df['last_pymnt_d'] = pd.to_datetime(df['last_pymnt_d'], format='%b-%y')
+
+# Treating missing values and generating new features
+df['last_credit_pull_d']=df.apply(lambda row: row['issue_d'] + pd.DateOffset(months=36) if pd.isna(row['last_credit_pull_d']) else row['last_credit_pull_d'], axis=1)
+df['loan_duration']=round((df['last_pymnt_d']-df['issue_d'])/np.timedelta64(1,'M'))
+df['loan_duration']=df.apply(lambda row: (df[df['loan_status']==1]['loan_duration']).median() if pd.isna(row['loan_duration']) else row['loan_duration'], axis=1)
+df['applied_funded_perc']=df['funded_amnt']/df['loan_amnt']
+df['inv_funded_perc']=df['funded_amnt_inv']/df['funded_amnt']
+df['inv_total_perc']=df['total_pymnt_inv']/df['total_pymnt']
+df['loan_prncp_perc']=df['total_rec_prncp']/(df['total_rec_prncp']+df['total_rec_int'])
+df['loan_prncp_perc']=df.apply(lambda row: (df[df['loan_status']==1]['loan_prncp_perc']).mean() if pd.isna(row['loan_prncp_perc']) else row['loan_prncp_perc'], axis=1)
+df['open_acc_perc']=df['open_acc']/df['total_acc']
+df['issue_to_credit_pull']=round((df['last_credit_pull_d']-df['issue_d'])/np.timedelta64(1,'M'))
+df['pub_rec_bankruptcies']=df.apply(lambda row: 0 if row['pub_rec'] == 0 else 1 if pd.isna(row['pub_rec_bankruptcies']) else row['pub_rec_bankruptcies'], axis=1)
+df['revol_util']=df['revol_util'].fillna(0)
+df['inv_total_perc']=df.apply(lambda row: row['inv_funded_perc'] if pd.isna(row['inv_total_perc']) else row['inv_total_perc'], axis=1)
+df.drop(['emp_length','verification_status','issue_d','earliest_cr_line','last_pymnt_d','last_credit_pull_d'], axis=1, inplace=True)
+```
+</details>
+
+# EDA
+
+## Univariate Analysis
+
+<details>
+<summary>View Code</summary>
+
+```python
+fig, axes = plt.subplots(nrows=8, ncols=4, figsize=(12,20))
+fig.tight_layout()
+for i, column in enumerate(df.drop(['home_ownership','purpose','loan_status'], axis=1).columns):
+    sns.histplot(df[column],ax=axes[i//4,i%4])
+```
+</details>
+
+### Output
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/1.png?raw=true)
+
+## Loan Duration Comparison
+
+```python
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
+sns.boxplot(data=df[df['term']==36], x='loan_duration',y='loan_status', orient='h',ax=axes[0]).set(title='Loan Duration (36 months)')
+sns.boxplot(data=df[df['term']==60], x='loan_duration',y='loan_status', orient='h',ax=axes[1]).set(title='Loan Duration (60 months)')
+```
+
+### Output
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/2.png?raw=true)
+
+# BONUS: Dimensionality Reduction using PCA
+The dimensionality problem caused by the enormous number of features (111 again) can be effectively mitigated by using Principal Component Analysis (PCA).
+
+But first, we would have to normalize the features using sklearn's StandardScaler because distance algorithms such as the PCA can only work well with scaled features.
+
+<details>
+<summary>View Code</summary>
+
+```python
+scaler = StandardScaler()
+df_norm=pd.DataFrame(scaler.fit_transform(df.drop(['term','loan_status','source_verified','income_verified','home_ownership','purpose'], axis=1)))
+nums = np.arange(20)
+var_ratio = []
+for num in nums:
+  pca = PCA(n_components=num)
+  pca.fit(df_norm)
+  var_ratio.append(np.sum(pca.explained_variance_ratio_))
+
+plt.figure(figsize=(6,5))
+plt.grid()
+plt.plot(nums,var_ratio,marker='o')
+plt.xlabel('n_components')
+plt.ylabel('Explained variance ratio')
+plt.title('n_components vs. Explained Variance Ratio')
+```
+</details>
+
+### Output
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/3.png?raw=true)
+
+According to the graph, the greatest increase in variance was explained by the first principal component (pc1), although it is still increasing with each PCs but the effect gets smaller with increasing PCs.
+
+We should probably take the first 6 principal components and see what each of them represents, using a **correlation** plot.
+
+```python
+pca=PCA(n_components=6)
+pc = pca.fit_transform(df_norm)
+pcadf = pd.DataFrame(data = pc, columns = ['pc1', 'pc2','pc3','pc4','pc5','pc6'])
+df = pd.concat([df, pcadf.set_index(df.index)], axis = 1)
+df.head()
+```
+
+### Output
+<pre>
+<table border="0" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>loan_amnt</th>
+      <th>funded_amnt</th>
+      <th>funded_amnt_inv</th>
+      <th>term</th>
+      <th>int_rate</th>
+      <th>installment</th>
+      <th>grade</th>
+      <th>sub_grade</th>
+      <th>home_ownership</th>
+      <th>annual_inc</th>
+      <th>...</th>
+      <th>inv_total_perc</th>
+      <th>loan_prncp_perc</th>
+      <th>open_acc_perc</th>
+      <th>issue_to_credit_pull</th>
+      <th>pc1</th>
+      <th>pc2</th>
+      <th>pc3</th>
+      <th>pc4</th>
+      <th>pc5</th>
+      <th>pc6</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>5000</td>
+      <td>5000</td>
+      <td>4975.0</td>
+      <td>36</td>
+      <td>10.65</td>
+      <td>162.87</td>
+      <td>1</td>
+      <td>2</td>
+      <td>RENT</td>
+      <td>24000.0</td>
+      <td>...</td>
+      <td>0.995000</td>
+      <td>0.852782</td>
+      <td>0.333333</td>
+      <td>53.0</td>
+      <td>-2.143712</td>
+      <td>-0.858843</td>
+      <td>-0.765985</td>
+      <td>0.373613</td>
+      <td>-0.868961</td>
+      <td>-0.411240</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2500</td>
+      <td>2500</td>
+      <td>2500.0</td>
+      <td>60</td>
+      <td>15.27</td>
+      <td>59.83</td>
+      <td>2</td>
+      <td>4</td>
+      <td>RENT</td>
+      <td>30000.0</td>
+      <td>...</td>
+      <td>1.000000</td>
+      <td>0.511939</td>
+      <td>0.750000</td>
+      <td>21.0</td>
+      <td>-3.368901</td>
+      <td>-2.285805</td>
+      <td>-0.980148</td>
+      <td>-1.822589</td>
+      <td>0.007316</td>
+      <td>1.675095</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2400</td>
+      <td>2400</td>
+      <td>2400.0</td>
+      <td>36</td>
+      <td>15.96</td>
+      <td>84.33</td>
+      <td>2</td>
+      <td>5</td>
+      <td>RENT</td>
+      <td>12252.0</td>
+      <td>...</td>
+      <td>1.000001</td>
+      <td>0.798491</td>
+      <td>0.200000</td>
+      <td>53.0</td>
+      <td>-2.774297</td>
+      <td>-1.923330</td>
+      <td>-0.941701</td>
+      <td>-0.460787</td>
+      <td>-0.381620</td>
+      <td>0.508698</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>10000</td>
+      <td>10000</td>
+      <td>10000.0</td>
+      <td>36</td>
+      <td>13.49</td>
+      <td>339.31</td>
+      <td>2</td>
+      <td>1</td>
+      <td>RENT</td>
+      <td>49200.0</td>
+      <td>...</td>
+      <td>1.000000</td>
+      <td>0.818671</td>
+      <td>0.270270</td>
+      <td>52.0</td>
+      <td>0.185247</td>
+      <td>0.034923</td>
+      <td>-0.147830</td>
+      <td>1.255168</td>
+      <td>-0.489875</td>
+      <td>-0.190256</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>5000</td>
+      <td>5000</td>
+      <td>5000.0</td>
+      <td>36</td>
+      <td>7.90</td>
+      <td>156.46</td>
+      <td>0</td>
+      <td>4</td>
+      <td>RENT</td>
+      <td>36000.0</td>
+      <td>...</td>
+      <td>1.000000</td>
+      <td>0.887751</td>
+      <td>0.750000</td>
+      <td>49.0</td>
+      <td>-2.675174</td>
+      <td>0.699733</td>
+      <td>-0.552858</td>
+      <td>-0.336921</td>
+      <td>-0.422495</td>
+      <td>-0.939074</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
+
+```python
+plt.figure(figsize=(15, 10))
+sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', fmt=".1f", linewidths=0.5)
+plt.show()
+```
+
+### Output
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/4.png?raw=true)
+
+According to the correlation plot, each principal component represents the following:
+* **PC1** - loan repayment amounts
+* **PC2** - loan attributes (interest, principle, grade)
+* **PC3** - % of investor contributions (just 'inv_funded_perc' & 'inv_total_perc')
+* **PC4** - loan accounts
+* **PC5** - public deragotary records (just 'pub_rec' and 'pub_rec_bankruptcies')
+
+The first principal component (PC1) did a great job by combining at least 8 features into 1, PC2 also grouped the loan attributes well.
+
+However, everything after PC2 is probably not so useful as they represent just about 2 features in each component, therefore we should probably just take the first 2 principal components **PC1** & **PC2** if necessary. However in this project we will not be using these principal components.
+
+# Feature Scaling & Encoding
+Scaling the dataset usually gives us a boost in model performance, this can be achieved using the MinMaxScaler from sklearn.
+
+Categorical variables will also be one-hot encoded, which is assigning a binary numerical value for each data attribute present.
+
+*NOTE: I have created a copy of the Scaler to be applied to the list of current/open loans in the further part of this project.*
+
+```python
+scaler_copy = MinMaxScaler()
+df_copy = pd.DataFrame(scaler_copy.fit_transform(df[['revol_util','int_rate','funded_amnt','grade','sub_grade','issue_to_credit_pull','total_acc','open_acc','dti','loan_prncp_perc','term']]), columns=df[['revol_util','int_rate','funded_amnt','grade','sub_grade','issue_to_credit_pull','total_acc','open_acc','dti','loan_prncp_perc','term']].columns)
+
+df = pd.get_dummies(df, columns = ['home_ownership','purpose'])
+df.drop(['purpose_other','home_ownership_OTHER'], axis=1, inplace=True)
+df.drop(['loan_amnt','funded_amnt_inv','installment','total_pymnt_inv','total_rec_prncp','total_rec_int'], axis=1, inplace=True)
+scaler = MinMaxScaler()
+df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+df.drop(['inv_total_perc','pub_rec_bankruptcies','total_pymnt','last_pymnt_amnt','loan_duration'], axis=1, inplace=True)
+df.head()
+```
+
+### Output
+<pre>
+<table border="0" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>funded_amnt</th>
+      <th>term</th>
+      <th>int_rate</th>
+      <th>grade</th>
+      <th>sub_grade</th>
+      <th>annual_inc</th>
+      <th>loan_status</th>
+      <th>dti</th>
+      <th>delinq_2yrs</th>
+      <th>inq_last_6mths</th>
+      <th>...</th>
+      <th>purpose_educational</th>
+      <th>purpose_home_improvement</th>
+      <th>purpose_house</th>
+      <th>purpose_major_purchase</th>
+      <th>purpose_medical</th>
+      <th>purpose_moving</th>
+      <th>purpose_renewable_energy</th>
+      <th>purpose_small_business</th>
+      <th>purpose_vacation</th>
+      <th>purpose_wedding</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>0.130435</td>
+      <td>0.0</td>
+      <td>0.275553</td>
+      <td>0.166667</td>
+      <td>0.25</td>
+      <td>0.003336</td>
+      <td>0.0</td>
+      <td>0.921974</td>
+      <td>0.0</td>
+      <td>0.125</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.057971</td>
+      <td>1.0</td>
+      <td>0.518967</td>
+      <td>0.333333</td>
+      <td>0.75</td>
+      <td>0.004336</td>
+      <td>1.0</td>
+      <td>0.033344</td>
+      <td>0.0</td>
+      <td>0.625</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.055072</td>
+      <td>0.0</td>
+      <td>0.555321</td>
+      <td>0.333333</td>
+      <td>1.00</td>
+      <td>0.001376</td>
+      <td>0.0</td>
+      <td>0.290764</td>
+      <td>0.0</td>
+      <td>0.250</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.275362</td>
+      <td>0.0</td>
+      <td>0.425184</td>
+      <td>0.333333</td>
+      <td>0.00</td>
+      <td>0.007538</td>
+      <td>0.0</td>
+      <td>0.666889</td>
+      <td>0.0</td>
+      <td>0.125</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.130435</td>
+      <td>0.0</td>
+      <td>0.130664</td>
+      <td>0.000000</td>
+      <td>0.75</td>
+      <td>0.005337</td>
+      <td>0.0</td>
+      <td>0.373458</td>
+      <td>0.0</td>
+      <td>0.375</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+5 rows × 41 columns
+</pre>
+
+# Model Training
+
+The data will be split into a 80% train & 20% test set.
+
+Due to the imbalance in outcomes, additional samples will be generated for the minority class (outcome 1-default) using **SMOTE**.
+
+The train set will be **10-fold cross-validated**, optimized for the best parameters using **Optuna** before finally evaluating against the test set.
+
+For this binary classification problem, our baseline algorithm would be the **logistic regressor** where other subsequent algorithms will be benchmarked against this baseline algorithm.
+
+```python
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, accuracy_score, roc_auc_score, make_scorer, roc_curve#, rac_scorer
+import optuna
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, cross_val_score
+optuna.logging.set_verbosity(optuna.logging.WARNING)
+```
