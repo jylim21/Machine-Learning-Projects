@@ -666,19 +666,22 @@ In layman terms, this model shows that loans which defaulted tend to have lower 
 
 But is this the case? We can try to optimize this baseline model by trying different combination of features.
 
+## Logistic Regression (Enhanced)
+
+Besides the 4 main features mentioned above, another model was created with the addition of other credit-related features such as 
+* debt-to-income ratio (dti)
+* revolving utilization
+* funded amount
+* total & open accounts
+* duration from issue date to last credit pull date in months
+
 <details>
 <summary>View Code</summary>
   
 ```python
-# X=df.drop('loan_status', axis=1)
-y=df['loan_status']
-# X=X.drop(['pc1','pc2','pc3','pc4','pc5','pc6'], axis=1)#
-# X=X.drop(['grade','total_pymnt'], axis=1)#
-#X=df[['pc1','pc2','pc3','pc4','pc5','pc6']]
-
-
 X=df[['revol_util','int_rate','funded_amnt','grade','sub_grade',
-    'issue_to_credit_pull','total_acc','open_acc','dti','loan_prncp_perc','term']]#,'loan_duration','total_pymnt','last_pymnt_amnt','sub_grade'
+    'issue_to_credit_pull','total_acc','open_acc','dti','loan_prncp_perc','term']]
+y=df['loan_status']
 
 x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
 x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
@@ -709,4 +712,82 @@ Recall:  0.9140
 F1-Score:  0.9522
 array([[6510,    7],
        [ 103, 1095]])
+</pre>
+
+This model managed to improve the recall by **13%** which also brought up the F1-score by 7%, this is quite an improvement from the baseline model but it could also subject to overfitting. To find out if it really overfitted, let's check it's performance on the test set this time:
+
+<details>
+<summary>View Code</summary>
+
+```python
+y_pred = LR.predict(x_test)
+y_pred_proba = LR.predict_proba(x_test)[::,1]
+LR_fp, LR_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.9878
+Precision:  0.9980
+Recall:  0.9150
+F1-Score:  0.9547
+array([[6632,    2],
+       [  92,  990]])
+</pre>
+
+The model retains its performance despite being used on unseen data, this is definitely an improvement over the baseline model.
+
+Let's see how other classification algorithms perform:
+
+## Gaussian Naive Bayes
+
+<details>
+<summary>View Code</summary>
+
+```python
+# X=df.drop('loan_status', axis=1)
+y=df['loan_status']
+# X=X.drop(['pc1','pc2','pc3','pc4','pc5','pc6'], axis=1)#
+# X=X.drop(['grade','total_pymnt'], axis=1)#
+# X=df[['pc1','pc2','pc3','pc4','pc5','pc6']]
+
+
+X=df[['revol_util','funded_amnt',
+    'issue_to_credit_pull','dti','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+over = SMOTE(sampling_strategy=0.9, random_state=42)
+under = RandomUnderSampler(sampling_strategy=1, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+NB=GaussianNB()
+NB.fit(x_train,y_train)
+y_pred = NB.predict(x_test)
+y_pred_proba = NB.predict_proba(x_test)[::,1]
+NB_fp, NB_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.8747
+Precision:  0.5381
+Recall:  0.7514
+F1-Score:  0.6271
+array([[5936,  698],
+       [ 269,  813]])
 </pre>
