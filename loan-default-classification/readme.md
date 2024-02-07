@@ -1133,3 +1133,153 @@ plt.show()
 </details>
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/7.png?raw=true)
+
+Surprisingly, the Logistic Regressor performs on par with the Neural Network algorithms, there is no doubt that we would choose the Logistic Regressor in this case.
+
+The Decision Tree classfier also performed impressively, but still lacks behind slightly in terms of accuracy and recall (far from the top border).
+
+Therefore, the **enhanced Logistic Regressor** model comes out as the winner in terms of both performance and interpretability in this case.
+
+# Analysis on current loans
+
+With the chosen model, we are now able to predict the final outcomes of the current ongoing loans with accuracy.
+
+But first, they will go through the same preprocessing steps earlier.
+
+<details>
+<summary>View Code</summary>
+
+```python
+df_test=df_test[['earliest_cr_line','last_credit_pull_d','issue_d','total_rec_prncp','total_rec_int','revol_util','int_rate','funded_amnt','grade','sub_grade','total_acc','open_acc','dti','term']]
+df_test['term']=df_test['term'].replace({' 36 months':36, ' 60 months':60}).astype(int)
+df_test['grade']=df_test['grade'].replace({'A':0, 'B':1, 'C':2, 'D':3, 'E':4, 'F':5, 'G':6})
+df_test['sub_grade']=df_test['sub_grade'].str[1].astype(int)
+df_test['int_rate']=df_test['int_rate'].str.replace('%','').astype(float)
+df_test['revol_util']=df_test['revol_util'].str.replace('%','').astype(float)
+df_test['earliest_cr_line'] = pd.to_datetime(df_test['earliest_cr_line'], format='%b-%y')
+df_test['last_credit_pull_d'] = pd.to_datetime(df_test['last_credit_pull_d'], format='%b-%y')
+df_test['issue_d'] = pd.to_datetime(df_test['issue_d'], format='%b-%y')
+df_test['last_credit_pull_d']=df_test.apply(lambda row: row['issue_d'] + pd.DateOffset(months=36) if pd.isna(row['last_credit_pull_d']) else row['last_credit_pull_d'], axis=1)
+df_test['loan_prncp_perc']=df_test['total_rec_prncp']/(df_test['total_rec_prncp']+df_test['total_rec_int'])
+df_test['loan_prncp_perc']=df_test.apply(lambda row: (df_test[df_test['loan_status']==1]['loan_prncp_perc']).mean() if pd.isna(row['loan_prncp_perc']) else row['loan_prncp_perc'], axis=1)
+df_test['issue_to_credit_pull']=round((df_test['last_credit_pull_d']-df_test['issue_d'])/np.timedelta64(1,'M'))
+df_test['revol_util']=df_test['revol_util'].fillna(0)
+df_test=df_test[['revol_util', 'int_rate', 'funded_amnt', 'grade', 'sub_grade','issue_to_credit_pull', 'total_acc', 'open_acc', 'dti','loan_prncp_perc', 'term']]
+df_test = pd.DataFrame(scaler_copy.transform(df_test), columns=df_test.columns)
+```
+</details>
+
+And by using our model to predict the outcomes and default probability,
+
+```python
+current_pred_proba=list(LR.predict_proba(df_test)[::,1])
+current_pred=list(LR.predict(df_test))
+df_test['default_probability']=current_pred_proba
+df_test['prediction']=current_pred
+df_test.head()
+```
+
+### Output
+
+<pre>
+<table border="0" class="dataframe">
+  <tbody>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>revol_util</th>
+      <th>int_rate</th>
+      <th>funded_amnt</th>
+      <th>grade</th>
+      <th>sub_grade</th>
+      <th>issue_to_credit_pull</th>
+      <th>total_acc</th>
+      <th>open_acc</th>
+      <th>dti</th>
+      <th>loan_prncp_perc</th>
+      <th>term</th>
+      <th>default_probability</th>
+      <th>prediction</th>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>0.539540</td>
+      <td>0.383035</td>
+      <td>0.072464</td>
+      <td>0.166667</td>
+      <td>1.00</td>
+      <td>0.607407</td>
+      <td>0.409091</td>
+      <td>0.309524</td>
+      <td>0.598199</td>
+      <td>0.707950</td>
+      <td>1.0</td>
+      <td>0.632781</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.636637</td>
+      <td>0.555321</td>
+      <td>0.275362</td>
+      <td>0.333333</td>
+      <td>1.00</td>
+      <td>0.600000</td>
+      <td>0.329545</td>
+      <td>0.214286</td>
+      <td>0.761254</td>
+      <td>0.650152</td>
+      <td>1.0</td>
+      <td>0.808488</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.500501</td>
+      <td>0.383035</td>
+      <td>0.347826</td>
+      <td>0.166667</td>
+      <td>1.00</td>
+      <td>0.607407</td>
+      <td>0.250000</td>
+      <td>0.095238</td>
+      <td>0.534845</td>
+      <td>0.708223</td>
+      <td>1.0</td>
+      <td>0.585261</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.794795</td>
+      <td>0.624341</td>
+      <td>0.391304</td>
+      <td>0.500000</td>
+      <td>0.50</td>
+      <td>0.607407</td>
+      <td>0.090909</td>
+      <td>0.071429</td>
+      <td>0.211404</td>
+      <td>0.627973</td>
+      <td>1.0</td>
+      <td>0.808174</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.897898</td>
+      <td>0.876712</td>
+      <td>0.428986</td>
+      <td>0.833333</td>
+      <td>0.75</td>
+      <td>0.607407</td>
+      <td>0.284091</td>
+      <td>0.285714</td>
+      <td>0.686229</td>
+      <td>0.556202</td>
+      <td>1.0</td>
+      <td>0.870890</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+</pre>
