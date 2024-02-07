@@ -1283,3 +1283,18 @@ df_test.head()
   </tbody>
 </table>
 </pre>
+
+## Distribution of loan cases
+
+<details>
+<summary>View Code</summary>
+
+```python
+plt.pie(df_test['prediction'].value_counts(), labels=['Fully Paid','Charged-Off'], autopct=lambda p: '{:.0f} ({:.1f}%)'.format(p * sum(df_test['prediction'].value_counts()) / 100, p), startangle=90)
+plt.title("Distribution of Default and Non-Default Cases")
+plt.show()
+```
+### Outcome
+</details>
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/9.png?raw=true)
