@@ -307,26 +307,28 @@ fig.tight_layout()
 for i, column in enumerate(df.drop(['home_ownership','purpose','loan_status'], axis=1).columns):
     sns.histplot(df[column],ax=axes[i//4,i%4])
 ```
+### Output
 </details>
 
-### Output
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/1.png?raw=true)
 
 ## Loan Duration Comparison
+
+<details>
+<summary>View Code</summary>
 
 ```python
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12,4))
 sns.boxplot(data=df[df['term']==36], x='loan_duration',y='loan_status', orient='h',ax=axes[0]).set(title='Loan Duration (36 months)')
 sns.boxplot(data=df[df['term']==60], x='loan_duration',y='loan_status', orient='h',ax=axes[1]).set(title='Loan Duration (60 months)')
 ```
-
 ### Output
+</details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/2.png?raw=true)
 
 # BONUS: Dimensionality Reduction using PCA
-The dimensionality problem caused by the enormous number of features (111 again) can be effectively mitigated by using Principal Component Analysis (PCA).
-
-But first, we would have to normalize the features using sklearn's StandardScaler because distance algorithms such as the PCA can only work well with scaled features.
+The dimensionality problem caused by the enormous number of features (111 again) can be effectively mitigated by using Principal Component Analysis (PCA). But first, all of the features were normalized using sklearn's StandardScaler because distance algorithms such as the PCA can only work well with scaled features.
 
 <details>
 <summary>View Code</summary>
@@ -348,183 +350,36 @@ plt.xlabel('n_components')
 plt.ylabel('Explained variance ratio')
 plt.title('n_components vs. Explained Variance Ratio')
 ```
+### Output
 </details>
 
-### Output
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/3.png?raw=true)
 
 According to the graph, the greatest increase in variance was explained by the first principal component (pc1), although it is still increasing with each PCs but the effect gets smaller with increasing PCs.
 
 We should probably take the first 6 principal components and see what each of them represents, using a **correlation** plot.
 
+<details>
+<summary>View Code</summary>
+
 ```python
 pca=PCA(n_components=6)
 pc = pca.fit_transform(df_norm)
 pcadf = pd.DataFrame(data = pc, columns = ['pc1', 'pc2','pc3','pc4','pc5','pc6'])
 df = pd.concat([df, pcadf.set_index(df.index)], axis = 1)
-df.head()
-```
 
-### Output
-<pre>
-<table border="0" class="dataframe">
-  <tbody>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>loan_amnt</th>
-      <th>funded_amnt</th>
-      <th>funded_amnt_inv</th>
-      <th>term</th>
-      <th>int_rate</th>
-      <th>installment</th>
-      <th>grade</th>
-      <th>sub_grade</th>
-      <th>home_ownership</th>
-      <th>annual_inc</th>
-      <th>...</th>
-      <th>inv_total_perc</th>
-      <th>loan_prncp_perc</th>
-      <th>open_acc_perc</th>
-      <th>issue_to_credit_pull</th>
-      <th>pc1</th>
-      <th>pc2</th>
-      <th>pc3</th>
-      <th>pc4</th>
-      <th>pc5</th>
-      <th>pc6</th>
-    </tr>
-    <tr>
-      <th>0</th>
-      <td>5000</td>
-      <td>5000</td>
-      <td>4975.0</td>
-      <td>36</td>
-      <td>10.65</td>
-      <td>162.87</td>
-      <td>1</td>
-      <td>2</td>
-      <td>RENT</td>
-      <td>24000.0</td>
-      <td>...</td>
-      <td>0.995000</td>
-      <td>0.852782</td>
-      <td>0.333333</td>
-      <td>53.0</td>
-      <td>-2.143712</td>
-      <td>-0.858843</td>
-      <td>-0.765985</td>
-      <td>0.373613</td>
-      <td>-0.868961</td>
-      <td>-0.411240</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>2500</td>
-      <td>2500</td>
-      <td>2500.0</td>
-      <td>60</td>
-      <td>15.27</td>
-      <td>59.83</td>
-      <td>2</td>
-      <td>4</td>
-      <td>RENT</td>
-      <td>30000.0</td>
-      <td>...</td>
-      <td>1.000000</td>
-      <td>0.511939</td>
-      <td>0.750000</td>
-      <td>21.0</td>
-      <td>-3.368901</td>
-      <td>-2.285805</td>
-      <td>-0.980148</td>
-      <td>-1.822589</td>
-      <td>0.007316</td>
-      <td>1.675095</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>2400</td>
-      <td>2400</td>
-      <td>2400.0</td>
-      <td>36</td>
-      <td>15.96</td>
-      <td>84.33</td>
-      <td>2</td>
-      <td>5</td>
-      <td>RENT</td>
-      <td>12252.0</td>
-      <td>...</td>
-      <td>1.000001</td>
-      <td>0.798491</td>
-      <td>0.200000</td>
-      <td>53.0</td>
-      <td>-2.774297</td>
-      <td>-1.923330</td>
-      <td>-0.941701</td>
-      <td>-0.460787</td>
-      <td>-0.381620</td>
-      <td>0.508698</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>10000</td>
-      <td>10000</td>
-      <td>10000.0</td>
-      <td>36</td>
-      <td>13.49</td>
-      <td>339.31</td>
-      <td>2</td>
-      <td>1</td>
-      <td>RENT</td>
-      <td>49200.0</td>
-      <td>...</td>
-      <td>1.000000</td>
-      <td>0.818671</td>
-      <td>0.270270</td>
-      <td>52.0</td>
-      <td>0.185247</td>
-      <td>0.034923</td>
-      <td>-0.147830</td>
-      <td>1.255168</td>
-      <td>-0.489875</td>
-      <td>-0.190256</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>5000</td>
-      <td>5000</td>
-      <td>5000.0</td>
-      <td>36</td>
-      <td>7.90</td>
-      <td>156.46</td>
-      <td>0</td>
-      <td>4</td>
-      <td>RENT</td>
-      <td>36000.0</td>
-      <td>...</td>
-      <td>1.000000</td>
-      <td>0.887751</td>
-      <td>0.750000</td>
-      <td>49.0</td>
-      <td>-2.675174</td>
-      <td>0.699733</td>
-      <td>-0.552858</td>
-      <td>-0.336921</td>
-      <td>-0.422495</td>
-      <td>-0.939074</td>
-    </tr>
-  </tbody>
-</table>
-</pre>
-
-```python
 plt.figure(figsize=(15, 10))
 sns.heatmap(df.corr(numeric_only=True), annot=True, cmap='coolwarm', fmt=".1f", linewidths=0.5)
 plt.show()
 ```
-
 ### Output
+</details>
+
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/4.png?raw=true)
+
+And by zooming into the 6 principal components:
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/8.png?raw=true)
 
 According to the correlation plot, each principal component represents the following:
 * **PC1** - loan repayment amounts
