@@ -751,15 +751,9 @@ Let's see how other classification algorithms perform:
 <summary>View Code</summary>
 
 ```python
-# X=df.drop('loan_status', axis=1)
-y=df['loan_status']
-# X=X.drop(['pc1','pc2','pc3','pc4','pc5','pc6'], axis=1)#
-# X=X.drop(['grade','total_pymnt'], axis=1)#
-# X=df[['pc1','pc2','pc3','pc4','pc5','pc6']]
-
-
 X=df[['revol_util','funded_amnt',
     'issue_to_credit_pull','dti','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+y=df['loan_status']
 
 x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
 x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
@@ -791,3 +785,351 @@ F1-Score:  0.6271
 array([[5936,  698],
        [ 269,  813]])
 </pre>
+
+## Decision Tree
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['revol_util','int_rate','grade','funded_amnt','term',
+    'issue_to_credit_pull','dti','sub_grade','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+y=df['loan_status']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+over = SMOTE(sampling_strategy=0.6, random_state=42)
+under = RandomUnderSampler(sampling_strategy=0.9, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+def objective(trial):
+    criterion = trial.suggest_categorical('criterion', ['gini', 'entropy','log_loss'])
+    splitter = trial.suggest_categorical('splitter', ['best','random'])
+    max_depth = trial.suggest_int('max_depth', 2, 10)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 30)
+    min_samples_leaf = trial.suggest_int('min_samples_leaf', 2, 20)
+    max_features = trial.suggest_categorical('max_features', ['sqrt','log2'])
+
+    # Create a decision tree regressor with the suggested hyperparameters
+    model=DecisionTreeClassifier(criterion=criterion,
+                                 splitter=splitter,
+                                 max_depth=max_depth,
+                                 min_samples_split=min_samples_split,
+                                 min_samples_leaf=min_samples_leaf,
+                                 max_features=max_features,
+                                 random_state=42
+                    )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=10)
+best_params = study.best_params
+
+DT=DecisionTreeClassifier(**best_params, random_state=42)
+DT.fit(x_train, y_train)
+y_pred = DT.predict(x_test)
+y_pred_proba = DT.predict_proba(x_test)[::,1]
+DT_fp, DT_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.9811
+Precision:  0.9309
+Recall:  0.9344
+F1-Score:  0.9327
+array([[6559,   75],
+       [  71, 1011]])
+</pre>
+
+## K-Nearest Neighbors
+
+<details>
+<summary>View Code</summary>
+
+```python
+X=df[['revol_util','int_rate','grade','funded_amnt',
+    'issue_to_credit_pull','total_acc','open_acc','dti','sub_grade','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+y=df['loan_status']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+# over = SMOTE(sampling_strategy=0.7, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.8, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+
+def objective(trial):
+    n_neighbors = trial.suggest_int('n_neighbors', 1, 20)
+    weights = trial.suggest_categorical('weights', ['uniform', 'distance'])
+    algorithm = trial.suggest_categorical('algorithm', ['auto', 'ball_tree', 'kd_tree', 'brute'])
+    p = trial.suggest_int('p', 1, 2)
+    leaf_size = trial.suggest_int('leaf_size', 1, 50)
+
+    # Create a decision tree regressor with the suggested hyperparameters
+    model = KNeighborsClassifier(n_neighbors=n_neighbors, 
+                                weights=weights, 
+                                algorithm=algorithm,
+                                p=p,
+                                leaf_size=leaf_size
+                               )
+
+    # Perform K-fold cross-validation
+    kfold = KFold(n_splits=10, shuffle=True, random_state=42)
+    ac_scorer = make_scorer(accuracy_score)
+    scores = cross_val_score(model, x_train, y_train, cv=kfold, scoring=ac_scorer)
+    return np.mean(scores)
+
+# Create and run the Optuna study
+study = optuna.create_study(direction='maximize')
+study.optimize(objective, n_trials=20)
+best_params = study.best_params
+
+KN=KNeighborsClassifier(**best_params)
+KN.fit(x_train, y_train)
+y_pred = KN.predict(x_test)
+y_pred_proba = KN.predict_proba(x_test)[::,1]
+KN_fp, KN_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.9158
+Precision:  0.9675
+Recall:  0.4131
+F1-Score:  0.5790
+array([[6619,   15],
+       [ 635,  447]])
+</pre>
+
+## Multi-level Perceptron (MLP)
+
+<details>
+<summary>View Code</summary>
+  
+```python
+X=df[['revol_util','int_rate','grade','funded_amnt','term',
+    'issue_to_credit_pull','total_acc','open_acc','dti','sub_grade','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+y=df['loan_status']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+over = SMOTE(sampling_strategy=0.8, random_state=42)
+under = RandomUnderSampler(sampling_strategy=0.8, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+MLP = MLPClassifier(hidden_layer_sizes=(),activation='logistic', solver='lbfgs')
+MLP.fit(x_train, y_train)
+y_pred = MLP.predict(x_test)
+y_pred_proba = MLP.predict_proba(x_test)[::,1]
+MLP_fp, MLP_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.9936
+Precision:  0.9952
+Recall:  0.9593
+F1-Score:  0.9769
+array([[6629,    5],
+       [  44, 1038]])
+</pre>
+
+## Sequential NN
+
+<details>
+<summary>View Code</summary>
+  
+```python
+import tensorflow as tf
+from tensorflow.keras import Model, Sequential
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.layers import Dense, Dropout, LSTM, Embedding
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.losses import BinaryCrossentropy
+
+X=df[['revol_util','int_rate','grade','funded_amnt','term',
+    'issue_to_credit_pull','total_acc','open_acc','dti','sub_grade','loan_prncp_perc']]#,'loan_duration','total_pymnt','last_pymnt_amnt'
+y=df['loan_status']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+over = SMOTE(sampling_strategy=0.9, random_state=42)
+under = RandomUnderSampler(sampling_strategy=1, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+# Creating model using the Sequential in tensorflow
+NN = Sequential()
+NN.add(Dense(512, activation='relu', input_dim=11))
+NN.add(Dropout(0.2))
+NN.add(Dense(1, activation='sigmoid'))
+NN.compile(optimizer='sgd', loss='binary_crossentropy', metrics=['accuracy'])
+hist = NN.fit(x_train, y_train, epochs=30, batch_size=10, validation_split=0.2)
+NN.summary()
+```
+### Output
+
+<pre>
+Epoch 1/30
+2851/2851 [==============================] - 7s 2ms/step - loss: 0.5784 - accuracy: 0.6988 - val_loss: 0.7621 - val_accuracy: 0.4673
+Epoch 2/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.4982 - accuracy: 0.7643 - val_loss: 0.7374 - val_accuracy: 0.5171
+Epoch 3/30
+2851/2851 [==============================] - 5s 2ms/step - loss: 0.4183 - accuracy: 0.8295 - val_loss: 0.5825 - val_accuracy: 0.6580
+Epoch 4/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.3356 - accuracy: 0.8846 - val_loss: 0.4345 - val_accuracy: 0.7709
+Epoch 5/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.2699 - accuracy: 0.9189 - val_loss: 0.3378 - val_accuracy: 0.8357
+Epoch 6/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.2243 - accuracy: 0.9358 - val_loss: 0.2436 - val_accuracy: 0.8956
+Epoch 7/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1928 - accuracy: 0.9473 - val_loss: 0.3451 - val_accuracy: 0.8210
+Epoch 8/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1693 - accuracy: 0.9535 - val_loss: 0.2476 - val_accuracy: 0.8850
+Epoch 9/30
+2851/2851 [==============================] - 5s 2ms/step - loss: 0.1523 - accuracy: 0.9594 - val_loss: 0.2331 - val_accuracy: 0.8902
+Epoch 10/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1396 - accuracy: 0.9625 - val_loss: 0.1917 - val_accuracy: 0.9144
+Epoch 11/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1288 - accuracy: 0.9655 - val_loss: 0.1791 - val_accuracy: 0.9205
+Epoch 12/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1216 - accuracy: 0.9674 - val_loss: 0.1262 - val_accuracy: 0.9487
+Epoch 13/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1146 - accuracy: 0.9697 - val_loss: 0.1588 - val_accuracy: 0.9276
+Epoch 14/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1085 - accuracy: 0.9709 - val_loss: 0.1296 - val_accuracy: 0.9449
+Epoch 15/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1041 - accuracy: 0.9727 - val_loss: 0.1663 - val_accuracy: 0.9240
+Epoch 16/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.1000 - accuracy: 0.9732 - val_loss: 0.1270 - val_accuracy: 0.9451
+Epoch 17/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0965 - accuracy: 0.9743 - val_loss: 0.1336 - val_accuracy: 0.9428
+Epoch 18/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0934 - accuracy: 0.9753 - val_loss: 0.1126 - val_accuracy: 0.9531
+Epoch 19/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0906 - accuracy: 0.9761 - val_loss: 0.0977 - val_accuracy: 0.9614
+Epoch 20/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0881 - accuracy: 0.9761 - val_loss: 0.1198 - val_accuracy: 0.9496
+Epoch 21/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0868 - accuracy: 0.9769 - val_loss: 0.1151 - val_accuracy: 0.9516
+Epoch 22/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0838 - accuracy: 0.9778 - val_loss: 0.1020 - val_accuracy: 0.9589
+Epoch 23/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0821 - accuracy: 0.9788 - val_loss: 0.1158 - val_accuracy: 0.9520
+Epoch 24/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0808 - accuracy: 0.9787 - val_loss: 0.0817 - val_accuracy: 0.9680
+Epoch 25/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0793 - accuracy: 0.9793 - val_loss: 0.1027 - val_accuracy: 0.9583
+Epoch 26/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0779 - accuracy: 0.9794 - val_loss: 0.1023 - val_accuracy: 0.9581
+Epoch 27/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0771 - accuracy: 0.9803 - val_loss: 0.0926 - val_accuracy: 0.9620
+Epoch 28/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0762 - accuracy: 0.9804 - val_loss: 0.0982 - val_accuracy: 0.9609
+Epoch 29/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0748 - accuracy: 0.9804 - val_loss: 0.1009 - val_accuracy: 0.9597
+Epoch 30/30
+2851/2851 [==============================] - 6s 2ms/step - loss: 0.0741 - accuracy: 0.9812 - val_loss: 0.0991 - val_accuracy: 0.9606
+Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 512)               6144      
+                                                                 
+ dropout (Dropout)           (None, 512)               0         
+                                                                 
+ dense_1 (Dense)             (None, 1)                 513       
+                                                                 
+=================================================================
+Total params: 6,657
+Trainable params: 6,657
+Non-trainable params: 0
+_________________________________________________________________
+</pre>
+</details>
+
+And by running it on the test data,
+
+<details>
+<summary>View Code</summary>
+  
+```python
+y_pred = NN.predict(x_test) >0.5
+y_pred_proba = NN.predict_proba(x_test)[::,1]
+NN_fp, NN_tp, _ = roc_curve(y_test,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_test, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_test, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_test, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_test, y_pred))
+confusion_matrix(y_test, y_pred)
+```
+### Output
+</details>
+
+<pre>
+242/242 [==============================] - 0s 1ms/step
+Accuracy:  0.9903
+Precision:  0.9970
+Recall:  0.9335
+F1-Score:  0.9642
+array([[6631,    3],
+       [  72, 1010]])
+</pre>
+
+# Model Evaluation - ROC
+
+<details>
+<summary>View Code</summary>
+  
+```python
+plt.plot(LR_fp,LR_tp, color='blue', label='Logistic Regression')
+plt.plot(NB_fp,NB_tp, color='red', label='Naive Bayes')
+plt.plot(DT_fp,DT_tp, color='cyan', label='Decision Tree')
+plt.plot(KN_fp,KN_tp, color='green', label='K Neighbors')
+plt.plot(MLP_fp,MLP_tp, color='grey', label='MLP')
+plt.plot(NN_fp,NN_tp, color='magenta', label='Sequential NN')
+plt.plot([0,1],[0,1],'--', color='black')
+plt.title('ROC Curve Comparison')
+plt.ylabel('True Positive Rate')
+plt.xlabel('False Positive Rate')
+plt.ylim(0,1)
+plt.xlim(0,1)
+plt.legend(loc=4)
+plt.show()
+```
+### Output
+</details>
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/7.png?raw=true)
