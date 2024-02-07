@@ -589,3 +589,124 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold, cross_val_score
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 ```
+
+## Baseline Algorithm - Logistic Regression
+
+```python
+X=df.drop('loan_status', axis=1)
+y=df['loan_status']
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+# over = SMOTE(sampling_strategy=0.8, random_state=42)
+# under = RandomUnderSampler(sampling_strategy=0.9, random_state=42)
+# smt = Pipeline(steps=[('o', over), ('u', under)])
+# x_train, y_train=smt.fit_resample(x_train, y_train)
+
+LR=LogisticRegression(random_state=42, penalty='l2', solver='newton-cholesky')
+LR.fit(x_train, y_train)
+y_pred = LR.predict(x_val)
+y_pred_proba = LR.predict_proba(x_val)[::,1]
+LR_fp, LR_tp, _ = roc_curve(y_val,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+
+### Output
+<pre>
+Accuracy:  0.9655
+Precision:  0.9957
+Recall:  0.7813
+F1-Score:  0.8756
+array([[6513,    4],
+       [ 262,  936]])
+</pre>
+
+The Logistic Regressor gave us an whooping **96.5%** prediction accuracy, seems quite impressive for this simple algorithm, or it isn't? 
+
+Notice that we have a considerable number of false negatives (180) but no false positives at all, this could meant that the algo did **not** manage to capture the minority class outcome. The false negatives here represents cases where the loans default when we think it will be paid off, these wrong assumptions could incur great loss to the LC as compared to the opposite which is false positives.
+
+Enough said, accuracy isn't the main consideration here, we should opt for models with a **high recall** as well.
+
+### **Feature Importances**
+
+The advantage of using the Logistic Regressor is that we are able to identify which feature has a greater influence in the final predicted outcome.
+
+By plotting the coefficients, 
+
+*(You should probably scroll right to the bottom of the image)*
+
+<details>
+<summary>View Code</summary>
+
+```python
+coeff=pd.DataFrame(zip(x_train.columns, np.transpose(LR.coef_.flatten())), columns=['features', 'coef']).sort_values(by='coef')
+plt.figure(figsize=(10, 15))
+plt.barh(coeff['features'], coeff['coef'], color='skyblue')
+plt.xlabel('Coefficient Value')
+plt.ylabel('Feature')
+plt.title('Logistic Regression Feature Importances')
+plt.grid(axis='x', linestyle='--', alpha=0.5)
+plt.show()
+```
+### Output
+</details>
+
+![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/loan-default-classification/images/6.png?raw=true)
+
+Recalling that *0 = paid in full* and *1 = default*, features with a more positive coefficient tend to increase the probability of loan default, whereas features with negative coefficients will decrease the likelihood of loan defaults.
+
+According to the plot, there weren't any features which would increase the probability of default, but there were highly-negative coefficients such as **Principle to Interest %**, **interest rate**, **term** and **loan grade** which has a negative influence on the probability of default.
+
+In layman terms, this model shows that loans which defaulted tend to have lower principal to interest %, lower interest rate, and a shorter term.
+
+But is this the case? We can try to optimize this baseline model by trying different combination of features.
+
+<details>
+<summary>View Code</summary>
+  
+```python
+# X=df.drop('loan_status', axis=1)
+y=df['loan_status']
+# X=X.drop(['pc1','pc2','pc3','pc4','pc5','pc6'], axis=1)#
+# X=X.drop(['grade','total_pymnt'], axis=1)#
+#X=df[['pc1','pc2','pc3','pc4','pc5','pc6']]
+
+
+X=df[['revol_util','int_rate','funded_amnt','grade','sub_grade',
+    'issue_to_credit_pull','total_acc','open_acc','dti','loan_prncp_perc','term']]#,'loan_duration','total_pymnt','last_pymnt_amnt','sub_grade'
+
+x_train, x_testval, y_train, y_testval = train_test_split(X, y, test_size=0.4, random_state=2)
+x_val, x_test, y_val, y_test = train_test_split(x_testval, y_testval, test_size=0.5, random_state=2)
+
+over = SMOTE(sampling_strategy=0.8, random_state=42)
+under = RandomUnderSampler(sampling_strategy=0.9, random_state=42)
+smt = Pipeline(steps=[('o', over), ('u', under)])
+x_train, y_train=smt.fit_resample(x_train, y_train)
+
+LR=LogisticRegression(random_state=42, penalty='l2', solver='newton-cholesky')
+LR.fit(x_train, y_train)
+y_pred = LR.predict(x_val)
+y_pred_proba = LR.predict_proba(x_val)[::,1]
+LR_fp, LR_tp, _ = roc_curve(y_val,  y_pred_proba)
+print("Accuracy: ", "%.4f" % accuracy_score(y_val, y_pred))
+print("Precision: ", "%.4f" % precision_score(y_val, y_pred))
+print("Recall: ", "%.4f" % recall_score(y_val, y_pred))
+print("F1-Score: ", "%.4f" % f1_score(y_val, y_pred))
+confusion_matrix(y_val, y_pred)
+```
+### Output
+</details>
+
+<pre>
+Accuracy:  0.9857
+Precision:  0.9936
+Recall:  0.9140
+F1-Score:  0.9522
+array([[6510,    7],
+       [ 103, 1095]])
+</pre>
