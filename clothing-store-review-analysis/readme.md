@@ -1,4 +1,4 @@
-<h1 align="center">Clothing Store Review Analysis</h1>
+<h1 align="center">Amazon Clothing Store Review Analysis</h1>
 
 ![alt text](https://github.com/jylim21/bear-with-data.github.io/blob/main/clothing-store-review-analysis/images/clothing-store.jpg?raw=true)
 
@@ -8,7 +8,7 @@ In this project, we are leveraging the said NLP techniques to programmatically a
 
 ## THE PROJECT
 
-The dataset used here is the [Consumer Review of Clothing Product](https://www.kaggle.com/datasets/jocelyndumlao/consumer-review-of-clothing-product) by *JOCELYN DUMLAO*. Our client is a clothing boutique well known to the locals of *Selangor* and has garnered up to a total of 50k reviews for their products. They were actually quite worried when they first showed me the reviews, "are these way too many for you?", no young girl, you're doing me a pretty good favor!
+The dataset used here is the [Consumer Review of Clothing Product](https://data.mendeley.com/datasets/pg3s4hw68k/2) which can be downloaded from *Mendeley Data*, an open source repository containing a rich diversity of research datasets. Our client is a clothing boutique well known to the locals of *Selangor* and has garnered up to a total of 50k reviews for their products. They were actually quite worried when they first showed me the reviews, "are these way too many for you?", no young girl, you're doing me a pretty good favor!
 
 Some of the notable libraries used specifically here are:
 - Textblob: It has a built in sentiment analysis function which predicts the polarity and subjectivity of a corpus.
@@ -55,7 +55,7 @@ def summary(dtf):
 
 </details>
 
-Loading the data into Python:
+Let's load the data into Python:
 
 ```python
 df = pd.read_csv("/kaggle/input/consumer-review-of-clothing-product/Consumer Review of Clothing Product/data_amazon.xlsx - Sheet1.csv")
@@ -143,8 +143,29 @@ df.head()
 </table>
 </pre>
 
-<details>
-<summary>View Code</summary>
+Notice that there are some NaN entries in the 'Title' column, this stimulated our curiosity on the completeness of the data. By running the 'summary' function I defined earlier, we can observe the quality of the dataset:
+
+```python
+summary(df)
+```
+
+### Output
+<pre>
+                 Type          NaN      Zeros
+Title          object    3968 (8%)     0 (0%)
+Review         object     831 (1%)     0 (0%)
+Cons_rating   float64     214 (0%)     0 (0%)
+Cloth_class    object      16 (0%)     0 (0%)
+Materials     float64  43597 (88%)  3989 (8%)
+Construction  float64  43595 (88%)  2849 (5%)
+Color         float64  43596 (88%)  4258 (8%)
+Finishing     float64  43601 (88%)  4212 (8%)
+Durability    float64  43604 (88%)  4514 (9%)
+</pre>
+
+From above, we can notice the individual ratings on Materials, Contruction, Color, Finishing, and Durability are mostly empty (88%), so it would be desirable to drop them off.
+
+Although the 'Title' column gives a summary on the 'Review' following it, it is also deemed redundant as the 'Review' column will not only give us the same info, but with equal or much more granular details.
 
 ```python
 mean_data=df.groupby('Cloth_class')['Cons_rating'].mean().reset_index().sort_values(by='Cons_rating', ascending=False)
