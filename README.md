@@ -1,7 +1,4 @@
-# Bear With Data!
-*You just have to bear with it!*
-
-## Select the projects below
+## My Work
 * [Laptop Prices Prediction](laptop-price-prediction/readme.md)
 * [Uber Fares Analysis](uber-fares-analysis/readme.md)
 * [Delhi Temperature Forecasting](delhi-daily-temperature-forecasting/readme.md)
